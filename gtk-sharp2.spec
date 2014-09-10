@@ -44,7 +44,7 @@ BuildRequires:  librsvg-devel
 BuildRequires:  update-desktop-files
 %endif
 BuildRequires:  vte-devel
-Version:        2.12.10
+Version:        2.12.26
 Release:        0
 Source:         %{_name}-%{version}.tar.bz2
 #Patch0:         gtk-sharp2-glib-2_31.patch
