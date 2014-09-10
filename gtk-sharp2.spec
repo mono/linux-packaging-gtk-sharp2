@@ -46,7 +46,7 @@ BuildRequires:  update-desktop-files
 BuildRequires:  vte-devel
 Version:        2.12.26
 Release:        0
-Source:         %{_name}-%{version}.tar.bz2
+Source:         %{_name}-%{version}.tar.gz
 #Patch0:         gtk-sharp2-glib-2_31.patch
 # PATCH-FIX-UPSTREAM gtk-sharp2-gmcs-as-compiler.patch dimstar@opensuse.org -- Use gmcs as prefered mono compiler.
 Patch0:         gtk-sharp2-gmcs-as-compiler.patch
