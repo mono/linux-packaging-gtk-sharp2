@@ -32,10 +32,9 @@ namespace Gtk {
 
 		public NodeView (NodeStore store) : base (IntPtr.Zero)
 		{
-			string[] names = { "model" };
+			IntPtr[] names = { GLib.Marshaller.StringToPtrGStrdup ("model") };
 			GLib.Value[] vals =  { new GLib.Value (store) };
-			CreateNativeObject (names, vals);
-			vals [0].Dispose ();
+			CreateNativeObject (names, vals, 0);
 			this.store = store;
 		}
 
@@ -44,13 +43,18 @@ namespace Gtk {
 		[DllImport("libgtk-win32-2.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
 		static extern void gtk_tree_view_set_model(IntPtr raw, IntPtr model);
 
+		[DllImport("libgobject-2.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
+		static extern void g_object_unref (IntPtr raw);
+
 		public NodeStore NodeStore {
 			get {
 				return store;
 			}
 			set {
-				store = value;
-				gtk_tree_view_set_model (Handle, store == null ? IntPtr.Zero : store.Handle);
+				var storeHandle = value == null ? IntPtr.Zero : value.Handle;
+				gtk_tree_view_set_model (Handle, storeHandle);
+				if (storeHandle != IntPtr.Zero)
+					g_object_unref (storeHandle);
 			}
 		}
 

@@ -28,10 +28,7 @@
 			if (raw_ret == IntPtr.Zero)
 				return new Device [0];
 			GLib.List list = new GLib.List(raw_ret);
-			Device[] result = new Device [list.Count];
-			for (int i = 0; i < list.Count; i++)
-				result [i] = list [i] as Device;
-			return result;
+			return GLib.Marshaller.ListToArray<Device> (list);
 		}
 
 		[DllImport("libgdk-win32-2.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
@@ -42,11 +39,7 @@
 			IntPtr raw_ret = gdk_list_visuals ();
 			if (raw_ret == IntPtr.Zero)
 				return new Visual [0];
-			GLib.List list = new GLib.List(raw_ret);
-			Visual[] result = new Visual [list.Count];
-			for (int i = 0; i < list.Count; i++)
-				result [i] = list [i] as Visual;
-			return result;
+			return GLib.Marshaller.ListPtrToArray<Visual> (raw_ret, typeof (GLib.List), true, false);
 		}
 
 		[DllImport("gdksharpglue-2", CallingConvention=CallingConvention.Cdecl)]
@@ -57,12 +50,7 @@
 				IntPtr raw_ret = gtksharp_get_gdk_net_supported ();
 				if (raw_ret == IntPtr.Zero)
 					return new Gdk.Atom [0];
-				GLib.List list = new GLib.List (raw_ret, typeof (Gdk.Atom));
-				Gdk.Atom[] atoms = new Gdk.Atom [list.Count];
-				for (int i = 0; i < list.Count; i++)
-					atoms [i] = list [i] as Gdk.Atom;
-
-				return atoms;
+				return GLib.Marshaller.ListPtrToArray<Gdk.Atom> (raw_ret, typeof (GLib.List), true, false);
 			}
 		}
 
@@ -83,6 +71,7 @@
 					offset += IntPtr.Size;
 					windows [i] = Gdk.Window.ForeignNew ((uint) windowID);
 				}
+				GLib.Marshaller.Free (raw_ret);
 				return windows;
 			}
 		}
@@ -127,12 +116,7 @@
 				IntPtr raw_ret = gtksharp_get_gdk_net_workarea ();
 				if (raw_ret == IntPtr.Zero)
 					return new Gdk.Rectangle [0];
-				GLib.List list = new GLib.List (raw_ret, typeof (Gdk.Rectangle));
-				Gdk.Rectangle[] workareas = new Gdk.Rectangle [list.Count];
-				for (int i = 0; i < list.Count; i++)
-					workareas [i] = (Gdk.Rectangle) list [i];
-
-				return workareas;
+				return GLib.Marshaller.ListPtrToArray<Gdk.Rectangle> (raw_ret, typeof(GLib.List), true, false);
 			}
 		}
 

@@ -23,7 +23,9 @@ namespace GLib {
 
 	using System;
 	using System.Collections;
+	using System.Collections.Generic;
 	using System.Runtime.InteropServices;
+	using System.Threading;
 
 	public delegate bool GSourceFunc ();
 
@@ -35,12 +37,28 @@ namespace GLib {
 		internal Delegate proxy_handler;
 		internal uint ID;
 
+		internal int proxyId;
+		static int idCounter;
+		internal static Dictionary<int, SourceProxy> proxies = new Dictionary<int, SourceProxy> ();
+
+		protected SourceProxy ()
+		{
+			lock(proxies) {
+				do {
+					proxyId = idCounter++;
+				} while (proxies.ContainsKey (proxyId));
+				proxies [proxyId] = this;
+			}
+		}
+
 		internal void Remove ()
 		{
 			lock (Source.source_handlers)
 				Source.source_handlers.Remove (ID);
 			real_handler = null;
 			proxy_handler = null;
+			lock(proxies)
+				proxies.Remove (proxyId);
 		}
 	}
 	
@@ -59,7 +77,8 @@ namespace GLib {
 
 			lock (Source.source_handlers) {
 				if (source_handlers.Contains (tag)) {
-					source_handlers.Remove (tag);
+					var handler = (SourceProxy)source_handlers [tag];
+					handler.Remove ();
 					ret = g_source_remove (tag);
 				}
 			}

@@ -28,7 +28,7 @@ namespace GLib {
 	public class Marshaller {
 
 		private Marshaller () {}
-		
+
 		[DllImport("libglib-2.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
 		static extern void g_free (IntPtr mem);
 
@@ -76,16 +76,31 @@ namespace GLib {
 			return ret;
 		}
 
+#if HAVE_NET_4_6
+		static bool hasFastGetStringOverload = typeof (System.Text.Encoding).GetMethod ("GetString", new [] { typeof (byte*), typeof (int) }) != null;
+		static string Utf8PtrToStringFast (IntPtr ptr, int len)
+		{
+			unsafe
+			{
+				var p = (byte*)ptr;
+				return System.Text.Encoding.UTF8.GetString (p, len);
+			}
+		}
+#endif
+
 		[DllImport("glibsharpglue-2", CallingConvention=CallingConvention.Cdecl)]
 		static extern UIntPtr glibsharp_strlen (IntPtr mem);
-
 		public static string Utf8PtrToString (IntPtr ptr) 
 		{
 			if (ptr == IntPtr.Zero)
 				return null;
 
 			int len = (int) (uint)glibsharp_strlen (ptr);
-			byte[] bytes = new byte [len];
+#if HAVE_NET_4_6
+			if (hasFastGetStringOverload)
+				return Utf8PtrToStringFast (ptr, len);
+#endif
+			byte [] bytes = new byte [len];
 			Marshal.Copy (ptr, bytes, 0, len);
 			return System.Text.Encoding.UTF8.GetString (bytes);
 		}
@@ -146,10 +161,16 @@ namespace GLib {
 		public static IntPtr StringToPtrGStrdup (string str) {
 			if (str == null)
 				return IntPtr.Zero;
-			byte[] bytes = System.Text.Encoding.UTF8.GetBytes (str);
-			IntPtr result = g_malloc (new UIntPtr ((ulong)bytes.Length + 1));
-			Marshal.Copy (bytes, 0, result, bytes.Length);
-			Marshal.WriteByte (result, bytes.Length, 0);
+			int len = System.Text.Encoding.UTF8.GetByteCount (str);
+			IntPtr result = g_malloc (new UIntPtr ((uint)len + 1));
+			unsafe
+			{
+				fixed (char* p = str)
+				{
+					System.Text.Encoding.UTF8.GetBytes (p, str.Length, (byte*)result, len);
+				}
+			}
+			Marshal.WriteByte (result, len, 0);
 			return result;
 		}
 
@@ -186,7 +207,7 @@ namespace GLib {
 				return new string [0];
 
 			int count = 0;
-			System.Collections.ArrayList result = new System.Collections.ArrayList ();
+			var result = new System.Collections.Generic.List<string> ();
 			IntPtr s = Marshal.ReadIntPtr (null_term_array, count++ * IntPtr.Size);
 			while (s != IntPtr.Zero) {
 				result.Add (Utf8PtrToString (s));
@@ -196,7 +217,7 @@ namespace GLib {
 			if (owned)
 				g_strfreev (null_term_array);
 
-			return (string[]) result.ToArray (typeof(string));
+			return result.ToArray ();
 		}
 
 		public static string[] PtrToStringArrayGFree (IntPtr string_array)
@@ -235,8 +256,8 @@ namespace GLib {
 		}
 
 		static bool check_sixtyfour () {
-			int szint = Marshal.SizeOf (typeof (int));
-			int szlong = Marshal.SizeOf (typeof (long));
+			int szint = sizeof (int);
+			int szlong = sizeof (long);
 			int szptr = IntPtr.Size;
 
 			if (szptr == szint)
@@ -254,7 +275,7 @@ namespace GLib {
 			for (int i = 0; i < args.Length; i++)
 				ptrs[i] = (int) Marshal.StringToHGlobalAuto (args[i]);
 
-			IntPtr buf = g_malloc (new UIntPtr ((ulong) Marshal.SizeOf(typeof(int)) * 
+			IntPtr buf = g_malloc (new UIntPtr ((ulong) sizeof (int) * 
 					       (ulong) args.Length));
 			Marshal.Copy (ptrs, 0, buf, ptrs.Length);
 			return buf;
@@ -267,7 +288,7 @@ namespace GLib {
 			for (int i = 0; i < args.Length; i++)
 				ptrs[i] = (long) Marshal.StringToHGlobalAuto (args[i]);
 				
-			IntPtr buf = g_malloc (new UIntPtr ((ulong) Marshal.SizeOf(typeof(long)) * 
+			IntPtr buf = g_malloc (new UIntPtr ((ulong) sizeof (long) * 
 					       (ulong) args.Length));
 			Marshal.Copy (ptrs, 0, buf, ptrs.Length);
 			return buf;
@@ -370,6 +391,7 @@ namespace GLib {
 			return result;
 		}
 
+		[Obsolete ("Use the ListPtrToArray<T> overload.")]
 		public static Array ListPtrToArray (IntPtr list_ptr, Type list_type, bool owned, bool elements_owned, Type elem_type)
 		{
 			ListBase list;
@@ -382,6 +404,31 @@ namespace GLib {
 				return ListToArray (list, elem_type);
 		}
 
+		public static T [] ListPtrToArray<T> (IntPtr list_ptr, Type list_type, bool owned, bool elements_owned, ListElementFree free_func)
+		{
+			ListBase list;
+			if (list_type == typeof (GLib.List))
+				list = new GLib.List (list_ptr, typeof (T), owned, elements_owned, free_func);
+			else
+				list = new GLib.SList (list_ptr, typeof (T), owned, elements_owned, free_func);
+
+			using (list)
+				return ListToArray<T> (list);
+		}
+
+		public static T [] ListPtrToArray<T> (IntPtr list_ptr, Type list_type, bool owned, bool elements_owned)
+		{
+			ListBase list;
+			if (list_type == typeof (GLib.List))
+				list = new GLib.List (list_ptr, typeof(T), owned, elements_owned);
+			else
+				list = new GLib.SList (list_ptr, typeof (T), owned, elements_owned);
+
+			using (list)
+				return ListToArray<T> (list);
+		}
+
+		[Obsolete ("Use the PtrArrayToArray<T> overload.")]
 		public static Array PtrArrayToArray (IntPtr list_ptr, bool owned, bool elements_owned, Type elem_type)
 		{
 			GLib.PtrArray array = new GLib.PtrArray (list_ptr, elem_type, owned, elements_owned);
@@ -391,13 +438,48 @@ namespace GLib {
 			return ret;
 		}
 
+		public static T [] PtrArrayToArray<T> (IntPtr list_ptr, bool owned, bool elements_owned)
+		{
+			var elem_type = typeof (T);
+			GLib.PtrArray array = new GLib.PtrArray (list_ptr, elem_type, owned, elements_owned);
+			T [] ret = new T [array.Count];
+			array.CopyTo (ret, 0);
+			array.Dispose ();
+			return ret;
+		}
+
+		public static T [] PtrArrayToArray<T> (IntPtr list_ptr, bool owned, bool elements_owned, ListElementFree free_func)
+		{
+			var elem_type = typeof (T);
+			GLib.PtrArray array = new GLib.PtrArray (list_ptr, elem_type, owned, elements_owned, free_func);
+			T [] ret = new T [array.Count];
+			array.CopyTo (ret, 0);
+			array.Dispose ();
+			return ret;
+		}
+
+		[Obsolete ("Use the ListToArray<T> overload")]
 		public static Array ListToArray (ListBase list, System.Type type)
 		{
-			Array result = Array.CreateInstance (type, list.Count);
-			if (list.Count > 0)
-				list.CopyTo (result, 0);
+			int count = list.Count;
+			Array result = Array.CreateInstance (type, count);
+			if (count > 0)
+				list.CopyTo (result, 0, count);
 
 			if (type.IsSubclassOf (typeof (GLib.Opaque)))
+				list.elements_owned = false;
+
+			return result;
+		}
+
+		public static T [] ListToArray<T> (ListBase list)
+		{
+			int count = list.Count;
+			var result = new T [count];
+			if (count > 0)
+				list.CopyTo (result, 0);
+
+			if (typeof(T).IsSubclassOf (typeof (GLib.Opaque)))
 				list.elements_owned = false;
 
 			return result;

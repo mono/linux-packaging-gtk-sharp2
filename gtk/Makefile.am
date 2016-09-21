@@ -81,6 +81,7 @@ customs = 				\
 	FileChooserWidget.custom	\
 	FileSelection.custom		\
 	Frame.custom			\
+	Global.custom			\
 	HBox.custom			\
 	HScale.custom			\
 	IconFactory.custom		\
@@ -101,6 +102,7 @@ customs = 				\
 	Object.custom			\
 	Plug.custom			\
 	PrintContext.custom		\
+	PrintSettings.custom	\
 	Printer.custom			\
 	RadioButton.custom		\
 	RadioMenuItem.custom		\

@@ -24,7 +24,7 @@ using System.Collections;
 
 namespace Gtk
 {
-	internal class TreeEnumerator : IEnumerator
+	internal class TreeEnumerator : IEnumerator, IDisposable
 	{
 		private Gtk.TreeIter iter;
 		private Gtk.TreeModel model;
@@ -34,11 +34,10 @@ namespace Gtk
 		public TreeEnumerator (TreeModel model)
 		{
 			this.model = model;
-			
-			model.RowChanged += new RowChangedHandler (row_changed);
-			model.RowDeleted += new RowDeletedHandler (row_deleted);
-			model.RowInserted += new RowInsertedHandler (row_inserted);
-			model.RowsReordered += new RowsReorderedHandler (rows_reordered);
+			model.RowChanged += row_event;
+			model.RowDeleted += row_event;
+			model.RowInserted += row_event;
+			model.RowsReordered += row_event;
 		}
 		
 		public object Current
@@ -76,24 +75,18 @@ namespace Gtk
 			changed = false;
 		}
 		
-		private void row_changed(object o, RowChangedArgs args)
+		private void row_event(object o, EventArgs args)
 		{
 			changed = true;
 		}
-		
-		private void row_deleted(object o, RowDeletedArgs args)
+
+		public void Dispose ()
 		{
-			changed = true;
-		}
-		
-		private void row_inserted(object o, RowInsertedArgs args)
-		{
-			changed = true;
-		}
-		
-		private void rows_reordered(object o, RowsReorderedArgs args)
-		{
-			changed = true;
+			model.RowChanged -= row_event;
+			model.RowDeleted -= row_event;
+			model.RowInserted -= row_event;
+			model.RowsReordered -= row_event;
+			model = null;
 		}
 	}
 }

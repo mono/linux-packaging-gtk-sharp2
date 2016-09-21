@@ -277,8 +277,13 @@ namespace GtkSharp.Generation {
 					if (PassAs != "out")
 						result [i] = (gen as IManualMarshaler).ReleaseNative ("native_" + CallName) + ";";
 					return result;
-				} else if (PassAs != String.Empty && MarshalType != CSType)
+				} else if (PassAs != String.Empty && MarshalType != CSType) {
+					var handle = gen as HandleBase;
+					if (handle != null) {
+						return new string [] { CallName + " = " + handle.FromNative ("native_" + CallName, Owned) + ";" };
+					}
 					return new string [] { CallName + " = " + gen.FromNative ("native_" + CallName) + ";" };
+				}
 				return new string [0];
 			}
 		}
@@ -340,16 +345,20 @@ namespace GtkSharp.Generation {
 
 				ArrayList result = new ArrayList ();
 				result.Add (String.Format ("int cnt_{0} = {0} == null ? 0 : {0}.Length;", CallName));
-				result.Add (String.Format ("{0}[] native_{1} = new {0} [cnt_{1}" + (NullTerminated ? " + 1" : "") + "];", MarshalType.TrimEnd('[', ']'), CallName));
-				result.Add (String.Format ("for (int i = 0; i < cnt_{0}; i++)", CallName));
+				result.Add (String.Format ("{0}[] native_{1} = new {0} [cnt_{1}" + (NullTerminated ? " + 1" : "") + "];", MarshalType.TrimEnd ('[', ']'), CallName));
 				IGeneratable gen = Generatable;
+				result.Add (String.Format ("for (int i = 0; i < cnt_{0}; i++) {{", CallName));
+				string marshalRes;
 				if (gen is IManualMarshaler)
-					result.Add (String.Format ("\tnative_{0} [i] = {1};", CallName, (gen as IManualMarshaler).AllocNative (CallName + "[i]")));
+					marshalRes = ((IManualMarshaler)gen).AllocNative (CallName + "[i]");
 				else
-					result.Add (String.Format ("\tnative_{0} [i] = {1};", CallName, gen.CallByName (CallName + "[i]")));
+					marshalRes = gen.CallByName (CallName + "[i]");
 
+				result.Add (String.Format ("\tnative_{0} [i] = {1};", CallName, marshalRes));
+				result.Add ("}");
 				if (NullTerminated)
 					result.Add (String.Format ("native_{0} [cnt_{0}] = IntPtr.Zero;", CallName));
+				
 				return (string[]) result.ToArray (typeof (string));
 			}
 		}
@@ -368,17 +377,24 @@ namespace GtkSharp.Generation {
 				if (CSType == MarshalType)
 					return new string [0];
 
+				var result = new System.Collections.Generic.List<string> ();
 				IGeneratable gen = Generatable;
-				if (gen is IManualMarshaler) {
-					string [] result = new string [4];
-					result [0] = "for (int i = 0; i < native_" + CallName + ".Length" + (NullTerminated ? " - 1" : "") + "; i++) {";
-					result [1] = "\t" + CallName + " [i] = " + Generatable.FromNative ("native_" + CallName + "[i]") + ";";
-					result [2] = "\t" + (gen as IManualMarshaler).ReleaseNative ("native_" + CallName + "[i]") + ";";
-					result [3] = "}";
-					return result;
+				if (gen is IManualMarshaler || (gen is MarshalGen && ((MarshalGen)gen).FreeAfterUse)) {
+					result.Add ("for (int i = 0; i < cnt_" + CallName + "; i++) {");
+					string nativeVariable = "native_" + CallName + "[i]";
+					if (gen is IManualMarshaler) {
+						// All of these are in setter methods, it's mostly fire and forget so there's no need to marshal back the return value.
+						//result.Add ("\t" + CallName + "[i] = " + gen.FromNative (nativeVariable) + ";");
+						result.Add ("\t" + (gen as IManualMarshaler).ReleaseNative (nativeVariable) + ";");
+					} else {
+						if (gen is MarshalGen && ((MarshalGen)gen).FreeAfterUse) {
+							// Don't use the FromNative return as it'll try and reconstruct the value, which is useless overhead.
+							result.Add ("\tGLib.Marshaller.Free (" + nativeVariable + ");");
+						}
+					}
+					result.Add ("}");
 				}
-
-				return new string [0];
+				return result.ToArray ();
 			}
 		}
 	}
@@ -488,9 +504,12 @@ namespace GtkSharp.Generation {
 
 		public override string[] Finish {
 			get {
-				string[] result = new string [2];
-				result [0] = CallName + " = " + FromNative ("native_" + CallName) + ";";
-				result [1] = (Generatable as IManualMarshaler).ReleaseNative ("native_" + CallName) + ";";
+				string[] result = new string [PassAs == string.Empty ? 1 : 2];
+				int i = 0;
+				if (PassAs != string.Empty) {
+					result [i++] = CallName + " = " + FromNative ("native_" + CallName) + ";";
+				}
+				result [i++] = (Generatable as IManualMarshaler).ReleaseNative ("native_" + CallName) + ";";
 				return result;
 			}
 		}
@@ -498,6 +517,42 @@ namespace GtkSharp.Generation {
 		public override string NativeSignature {
 			get {
 				return "IntPtr " + CallName;
+			}
+		}
+	}
+
+	public class ByRefParameter : Parameter
+	{
+
+		public ByRefParameter (XmlElement elem) : base (elem) { }
+
+		public override string MarshalType {
+			get {
+				return "ref " + CallName;
+			}
+		}
+
+		public override string [] Prepare {
+			get {
+				return new string [0];
+			}
+		}
+
+		public override string CallString {
+			get {
+				return "ref " + CallName;
+			}
+		}
+
+		public override string [] Finish {
+			get {
+				return new string [0];
+			}
+		}
+
+		public override string NativeSignature {
+			get {
+				return "ref " + CSType + " " + CallName;
 			}
 		}
 	}
@@ -660,8 +715,10 @@ namespace GtkSharp.Generation {
 					}
 				} else if (p.CType == "GError**")
 					p = new ErrorParameter (parm);
-				else if (gen is StructBase || gen is ByRefGen) {
+				else if (gen is StructBase) {
 					p = new StructParameter (parm);
+				} else if (gen is ByRefGen) {
+					p = new ByRefParameter (parm);
 				} else if (gen is CallbackGen) {
 					has_cb = true;
 				}
