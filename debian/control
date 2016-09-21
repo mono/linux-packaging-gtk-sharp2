@@ -16,8 +16,8 @@ Build-Depends: cli-common-dev (>= 0.5.7),
                pkg-config
 Standards-Version: 3.9.3
 Homepage: http://www.mono-project.com/GtkSharp
-Vcs-Git: git://git.debian.org/git/pkg-cli-libs/packages/gtk-sharp2.git
-Vcs-Browser: http://git.debian.org/?p=pkg-cli-libs/packages/gtk-sharp2.git
+Vcs-Git: git://github.com/mono/linux-packaging-gtk-sharp2.git
+Vcs-Browser: https://github.com/mono/linux-packaging-gtk-sharp2
 
 Package: gtk-sharp2
 Architecture: all
