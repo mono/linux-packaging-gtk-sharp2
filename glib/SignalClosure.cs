@@ -56,31 +56,32 @@ namespace GLib {
 
 		IntPtr handle;
 		IntPtr raw_closure;
-		string name;
+		internal string name;
 		uint id = UInt32.MaxValue;
 		System.Type args_type;
-		Delegate custom_marshaler;
-		GCHandle gch;
+		GCHandle? gch;
+		internal bool before_closure;
 
 		static Hashtable closures = new Hashtable ();
 
-		public SignalClosure (IntPtr obj, string signal_name, System.Type args_type)
+		public SignalClosure (IntPtr obj, string signal_name, System.Type args_type, bool before_closure)
 		{
 			raw_closure = glibsharp_closure_new (Marshaler, Notify, IntPtr.Zero);
 			closures [raw_closure] = this;
 			handle = obj;
 			name = signal_name;
 			this.args_type = args_type;
+			this.before_closure = before_closure;
 		}
 
-		public SignalClosure (IntPtr obj, string signal_name, Delegate custom_marshaler, Signal signal)
+		public SignalClosure (IntPtr obj, string signal_name, Delegate custom_marshaler, Signal signal, bool before_closure)
 		{
 			gch = GCHandle.Alloc (signal);
 			raw_closure = g_cclosure_new (custom_marshaler, (IntPtr) gch, Notify);
 			closures [raw_closure] = this;
 			handle = obj;
 			name = signal_name;
-			this.custom_marshaler = custom_marshaler;
+			this.before_closure = before_closure;
 		}
 
 		public event EventHandler Disposed;
@@ -103,9 +104,8 @@ namespace GLib {
 		{
 			Disconnect ();
 			closures.Remove (raw_closure);
-			if (custom_marshaler != null)
-				gch.Free ();
-			custom_marshaler = null;
+			if (gch != null)
+				gch.Value.Free ();
 			if (Disposed != null)
 				Disposed (this, EventArgs.Empty);
 			GC.SuppressFinalize (this);
@@ -132,11 +132,9 @@ namespace GLib {
 
 		static void MarshalCallback (IntPtr raw_closure, IntPtr return_val, uint n_param_vals, IntPtr param_values, IntPtr invocation_hint, IntPtr marshal_data)
 		{
-			string message = String.Empty;
-
+			SignalClosure closure = null;
 			try {
-				SignalClosure closure = closures [raw_closure] as SignalClosure;
-				message = "Marshaling " + closure.name + " signal";
+				closure = closures [raw_closure] as SignalClosure;
 				Value objval = (Value) Marshal.PtrToStructure (param_values, typeof (Value));
 				GLib.Object __obj = objval.Val as GLib.Object;
 				if (__obj == null)
@@ -150,8 +148,9 @@ namespace GLib {
 				SignalArgs args = Activator.CreateInstance (closure.args_type, new object [0]) as SignalArgs;
 				args.Args = new object [n_param_vals - 1];
 				GLib.Value[] vals = new GLib.Value [n_param_vals - 1];
+				int valueSize = Marshal.SizeOf (typeof (Value));
 				for (int i = 1; i < n_param_vals; i++) {
-					IntPtr ptr = new IntPtr (param_values.ToInt64 () + i * Marshal.SizeOf (typeof (Value)));
+					IntPtr ptr = new IntPtr (param_values.ToInt64 () + i * valueSize);
 					vals [i - 1] = (Value) Marshal.PtrToStructure (ptr, typeof (Value));
 					args.Args [i - 1] = vals [i - 1].Val;
 				}
@@ -159,7 +158,7 @@ namespace GLib {
 				closure.Invoke (ci_args);
 				for (int i = 1; i < n_param_vals; i++) {
 					vals [i - 1].Update (args.Args [i - 1]);
-					IntPtr ptr = new IntPtr (param_values.ToInt64 () + i * Marshal.SizeOf (typeof (Value)));
+					IntPtr ptr = new IntPtr (param_values.ToInt64 () + i * valueSize);
 					Marshal.StructureToPtr (vals [i - 1], ptr, false);
 				}
 				if (return_val == IntPtr.Zero || args.RetVal == null)
@@ -169,7 +168,8 @@ namespace GLib {
 				ret.Val = args.RetVal;
 				Marshal.StructureToPtr (ret, return_val, false);
 			} catch (Exception e) {
-				Console.WriteLine (message);
+				if (closure != null)
+					Console.WriteLine ("Marshaling {0} signal", closure.name);
 				ExceptionManager.RaiseUnhandledException (e, false);
 			}
 		}

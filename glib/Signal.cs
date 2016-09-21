@@ -81,8 +81,9 @@ namespace GLib {
 			bool NativeCallback (ref InvocationHint hint, uint n_pvals, IntPtr pvals_ptr, IntPtr data)
 			{
 				object[] pvals = new object [n_pvals];
+				int valueSize = Marshal.SizeOf (typeof (Value));
 				for (int i = 0; i < n_pvals; i++) {
-					IntPtr p = new IntPtr ((long) pvals_ptr + i * Marshal.SizeOf (typeof (Value)));
+					IntPtr p = new IntPtr ((long) pvals_ptr + i * valueSize);
 					Value v = (Value) Marshal.PtrToStructure (p, typeof (Value));
 					pvals [i] = v.Val;
 				}
@@ -157,14 +158,14 @@ namespace GLib {
 		void ClosureDisposedCB (object o, EventArgs args)
 		{
 			if (o == before_closure) {
-				before_closure.Disposed -= new EventHandler (ClosureDisposedHandler);
-				before_closure.Invoked -= new ClosureInvokedHandler (ClosureInvokedCB);
+				before_closure.Disposed -= ClosureDisposedHandler;
+				before_closure.Invoked -= ClosureInvokedHandler;
 				if (tref.Target != null)
 					tref.Target.BeforeSignals.Remove (name);
 				before_closure = null;
 			} else if (o == after_closure) {
-				after_closure.Disposed -= new EventHandler (ClosureDisposedHandler);
-				after_closure.Invoked -= new ClosureInvokedHandler (ClosureInvokedCB);
+				after_closure.Disposed -= ClosureDisposedHandler;
+				after_closure.Invoked -= ClosureInvokedHandler;
 				if (tref.Target != null)
 					tref.Target.AfterSignals.Remove (name);
 				after_closure = null;
@@ -183,20 +184,21 @@ namespace GLib {
 			}
 		}
 
-		void ClosureInvokedCB (object o, ClosureInvokedArgs args)
+		static void ClosureInvokedCB (object o, ClosureInvokedArgs args)
 		{
+			var closure = (SignalClosure)o;
 			Delegate handler;
-			if (o == before_closure)
-				handler = args.Target.BeforeSignals [name] as Delegate;
+			if (closure.before_closure)
+				handler = args.Target.BeforeSignals [closure.name] as Delegate;
 			else
-				handler = args.Target.AfterSignals [name] as Delegate;
+				handler = args.Target.AfterSignals [closure.name] as Delegate;
 
 			if (handler != null)
 				handler.DynamicInvoke (new object[] {args.Target, args.Args});
 		}
 
-		ClosureInvokedHandler closure_invoked_cb;
-		ClosureInvokedHandler ClosureInvokedHandler {
+		static ClosureInvokedHandler closure_invoked_cb;
+		static ClosureInvokedHandler ClosureInvokedHandler {
 			get {
 				if (closure_invoked_cb == null)
 					closure_invoked_cb = new ClosureInvokedHandler (ClosureInvokedCB);
@@ -245,9 +247,9 @@ namespace GLib {
 				tref.Target.BeforeSignals [name] = Delegate.Combine (tref.Target.BeforeSignals [name] as Delegate, d);
 				if (before_closure == null) {
 					if (marshaler == null)
-						before_closure = new SignalClosure (tref.Handle, name, args_type);
+						before_closure = new SignalClosure (tref.Handle, name, args_type, before_closure: true);
 					else
-						before_closure = new SignalClosure (tref.Handle, name, marshaler, this);
+						before_closure = new SignalClosure (tref.Handle, name, marshaler, this, before_closure: true);
 					before_closure.Disposed += ClosureDisposedHandler;
 					before_closure.Invoked += ClosureInvokedHandler;
 					before_closure.Connect (false);
@@ -256,9 +258,9 @@ namespace GLib {
 				tref.Target.AfterSignals [name] = Delegate.Combine (tref.Target.AfterSignals [name] as Delegate, d);
 				if (after_closure == null) {
 					if (marshaler == null)
-						after_closure = new SignalClosure (tref.Handle, name, args_type);
+						after_closure = new SignalClosure (tref.Handle, name, args_type, before_closure: false);
 					else
-						after_closure = new SignalClosure (tref.Handle, name, marshaler, this);
+						after_closure = new SignalClosure (tref.Handle, name, marshaler, this, before_closure: false);
 					after_closure.Disposed += ClosureDisposedHandler;
 					after_closure.Invoked += ClosureInvokedHandler;
 					after_closure.Connect (true);

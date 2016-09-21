@@ -107,9 +107,9 @@ namespace GtkSharp.Generation {
 			AddType (new ConstStringGen ("const-xmlChar"));
 			AddType (new ConstStringGen ("const-char"));
 			AddType (new ConstFilenameGen ("const-gfilename"));
-			AddType (new MarshalGen ("gfilename", "string", "IntPtr", "GLib.Marshaller.StringToFilenamePtr({0})", "GLib.Marshaller.FilenamePtrToStringGFree({0})"));
-			AddType (new MarshalGen ("gchar", "string", "IntPtr", "GLib.Marshaller.StringToPtrGStrdup({0})", "GLib.Marshaller.PtrToStringGFree({0})"));
-			AddType (new MarshalGen ("char", "string", "IntPtr", "GLib.Marshaller.StringToPtrGStrdup({0})", "GLib.Marshaller.PtrToStringGFree({0})"));
+			AddType (new StringMarshalGen ("gfilename", "string", "IntPtr", "GLib.Marshaller.StringToFilenamePtr({0})", "GLib.Marshaller.FilenamePtrToStringGFree({0})"));
+			AddType (new StringMarshalGen ("gchar", "string", "IntPtr", "GLib.Marshaller.StringToPtrGStrdup({0})", "GLib.Marshaller.PtrToStringGFree({0})"));
+			AddType (new StringMarshalGen ("char", "string", "IntPtr", "GLib.Marshaller.StringToPtrGStrdup({0})", "GLib.Marshaller.PtrToStringGFree({0})"));
 			AddType (new SimpleGen ("GStrv", "string[]", "null"));
 
 			// manually wrapped types requiring more complex marshaling
@@ -121,7 +121,7 @@ namespace GtkSharp.Generation {
 			AddType (new MarshalGen ("gunichar", "char", "uint", "GLib.Marshaller.CharToGUnichar ({0})", "GLib.Marshaller.GUnicharToChar ({0})"));
 			AddType (new MarshalGen ("time_t", "System.DateTime", "IntPtr", "GLib.Marshaller.DateTimeTotime_t ({0})", "GLib.Marshaller.time_tToDateTime ({0})"));
 			AddType (new MarshalGen ("GString", "string", "IntPtr", "new GLib.GString ({0}).Handle", "GLib.GString.PtrToString ({0})"));
-			AddType (new MarshalGen ("GType", "GLib.GType", "IntPtr", "{0}.Val", "new GLib.GType({0})"));
+			AddType (new MarshalGen ("GType", "GLib.GType", "IntPtr", "{0}.Val", "new GLib.GType({0})", freeAfterUse: false));
 			AddType (new ByRefGen ("GValue", "GLib.Value"));
 			AddType (new SimpleGen ("GDestroyNotify", "GLib.DestroyNotify", "null"));
 
