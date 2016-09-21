@@ -45,11 +45,10 @@ BuildRequires:  update-desktop-files
 %endif
 BuildRequires:  vte-devel
 Version:        2.12.26
-Release:        0
+Release:        1
 Source:         %{_name}-%{version}.tar.gz
 #Patch0:         gtk-sharp2-glib-2_31.patch
 # PATCH-FIX-UPSTREAM gtk-sharp2-gmcs-as-compiler.patch dimstar@opensuse.org -- Use gmcs as prefered mono compiler.
-Patch0:         gtk-sharp2-gmcs-as-compiler.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
@@ -75,6 +74,15 @@ Group:          System/GUI/GNOME
 
 %description -n gtk-sharp2-doc
 This package contains the gtk-sharp2 documentation for monodoc.
+
+%package -n gtk-sharp2-devel
+Summary:        Dummy -devel package for gtk-sharp2
+License:        LGPL-2.1
+Group:          System/GUI/GNOME
+Requires:	gtk-sharp2
+
+%description -n gtk-sharp2-devel
+Dummy package to unify dependencies between SUSE and Fedora
 
 %package -n glib-sharp2
 Summary:        Mono bindings for glib
@@ -111,7 +119,6 @@ package which depends on all gtk-sharp2 subpackages)
 
 %prep
 %setup -q -n %{_name}-%{version}
-%patch0 -p1
 
 %build
 autoreconf -fiv
