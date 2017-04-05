@@ -39,18 +39,8 @@ namespace GLib {
 			gch = GCHandle.Alloc (this);
 			reference = target;
 			g_object_add_toggle_ref (target.Handle, ToggleNotifyCallback, (IntPtr) gch);
-			g_object_unref (target.Handle);
-		}
-
-		public bool IsAlive {
-			get {
-				if (reference is WeakReference) {
-					WeakReference weak = reference as WeakReference;
-					return weak.IsAlive;
-				} else if (reference == null)
-					return false;
-				return true;
-			}
+			if (target.owned && !(target is InitiallyUnowned))
+				g_object_unref (target.Handle);
 		}
 
 		public IntPtr Handle {

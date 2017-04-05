@@ -21,11 +21,11 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 
-		static Hashtable destroy_handlers;
-		static Hashtable DestroyHandlers {
+		static System.Collections.Generic.Dictionary<IntPtr, EventHandler> destroy_handlers;
+		static System.Collections.Generic.Dictionary<IntPtr, EventHandler> DestroyHandlers {
 			get {
 				if (destroy_handlers == null)
-					destroy_handlers = new Hashtable ();
+					destroy_handlers = new System.Collections.Generic.Dictionary<IntPtr, EventHandler> (IntPtrEqualityComparer.Instance);
 				return destroy_handlers;
 			}
 		}
@@ -41,8 +41,8 @@
 		[GLib.DefaultSignalHandler(Type=typeof(Gtk.Object), ConnectionMethod="OverrideDestroyed")]
 		protected virtual void OnDestroyed ()
 		{
-			if (DestroyHandlers.Contains (Handle)) {
-				EventHandler handler = (EventHandler) DestroyHandlers [Handle];
+			EventHandler handler;
+			if (DestroyHandlers.TryGetValue (Handle, out handler)) {
 				handler (this, EventArgs.Empty);
 				DestroyHandlers.Remove (Handle);
 			}
@@ -51,11 +51,13 @@
 		[GLib.Signal("destroy")]
 		public event EventHandler Destroyed {
 			add {
-				EventHandler handler = (EventHandler) DestroyHandlers [Handle];
-				DestroyHandlers [Handle] = Delegate.Combine (handler, value);
+				EventHandler handler;
+				DestroyHandlers.TryGetValue (Handle, out handler);
+				DestroyHandlers [Handle] = (EventHandler)Delegate.Combine (handler, value);
 			}
 			remove {
-				EventHandler handler = (EventHandler) DestroyHandlers [Handle];
+				EventHandler handler;
+				DestroyHandlers.TryGetValue (Handle, out handler);
 				handler = (EventHandler) Delegate.Remove (handler, value);
 				if (handler != null)
 					DestroyHandlers [Handle] = handler;
@@ -92,29 +94,20 @@
 			}
 		}
 
-		protected override void CreateNativeObject (string[] names, GLib.Value[] vals)
-		{
-			base.CreateNativeObject (names, vals);
-		}
-
 		public override void Dispose ()
 		{
-			if (Handle == IntPtr.Zero)
-				return;
-			InternalDestroyed -= NativeDestroyHandler;
-			base.Dispose ();
-		}
+			// Don't call base.Dispose because it's calling g_object_unref
+			// which is done by gtk_object_destroy for Gtk.Object
 
-		[DllImport("libgobject-2.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
-		private static extern void g_object_ref_sink (IntPtr raw);
+			//Should line below be uncommented?(but it breaks backward compatiblity)
+			//throw new InvalidOperationException("Calling Dispose is invalid for Gtk objects. Call Destroy().");
+		}
 
 		protected override IntPtr Raw {
 			get {
 				return base.Raw;
 			}
 			set {
-				if (value != IntPtr.Zero)
-					g_object_ref_sink (value);
 				base.Raw = value;
 				if (value != IntPtr.Zero)
 					InternalDestroyed += NativeDestroyHandler;
@@ -128,6 +121,8 @@
 		{
 			if (Handle == IntPtr.Zero)
 				return;
+			if (IsFloating)//We have to check or we will increment ref_count
+				IsFloating = false;
 			gtk_object_destroy (Handle);
 			InternalDestroyed -= NativeDestroyHandler;
 		}

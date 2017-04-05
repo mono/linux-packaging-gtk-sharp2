@@ -22,6 +22,7 @@ sources = 				\
 	BindingAttribute.cs		\
 	ChildPropertyAttribute.cs	\
 	ITreeNode.cs			\
+	IntPtrEqualityComparer.cs	\
 	Key.cs				\
 	MoveFocusHandler.cs		\
 	NodeCellDataFunc.cs		\
@@ -81,6 +82,7 @@ customs = 				\
 	FileChooserWidget.custom	\
 	FileSelection.custom		\
 	Frame.custom			\
+	Global.custom			\
 	HBox.custom			\
 	HScale.custom			\
 	IconFactory.custom		\
@@ -101,10 +103,18 @@ customs = 				\
 	Object.custom			\
 	Plug.custom			\
 	PrintContext.custom		\
+	PrintSettings.custom	\
 	Printer.custom			\
 	RadioButton.custom		\
 	RadioMenuItem.custom		\
 	RadioToolButton.custom		\
+	RecentAction.custom			\
+	RecentChooserAdapter.custom	\
+	RecentChooserDialog.custom	\
+	RecentChooserDefault.custom	\
+	RecentChooserMenu.custom	\
+	RecentChooserWidget.custom	\
+	RecentInfo.custom			\
 	ScrolledWindow.custom		\
 	SelectionData.custom		\
 	Settings.custom			\

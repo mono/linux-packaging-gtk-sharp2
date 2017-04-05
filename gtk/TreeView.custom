@@ -24,19 +24,44 @@
 // Boston, MA 02111-1307, USA.
 
 
+		[DllImport("libgtk-win32-2.0-0.dll", CallingConvention = CallingConvention.Cdecl)]
+		static extern IntPtr gtk_tree_view_new_with_model(IntPtr model);
+
+		[DllImport("libgobject-2.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
+		static extern void g_object_ref (IntPtr raw);
+
+		public TreeView (Gtk.TreeModel model) : base (IntPtr.Zero)
+		{
+			if (GetType () != typeof (TreeView)) {
+				var vals = new GLib.Value[1];
+				var names = new IntPtr[1];
+				var param_count = 0;
+				if (model != null) {
+					names[param_count] = GLib.Marshaller.StringToPtrGStrdup ("model");
+					vals[param_count++] = new GLib.Value (model);
+				}
+				CreateNativeObject (names, vals, param_count);
+				return;
+			}
+			owned = true;
+			Raw = gtk_tree_view_new_with_model(model == null ? IntPtr.Zero : model.Handle);
+			if (model != null)
+				g_object_ref (model.Handle);
+		}
+
 		[Obsolete ("Use NodeView with NodeStores")]
 		public TreeView (NodeStore store) : base (IntPtr.Zero)
 		{
 			if (GetType() != typeof (TreeView)) {
-				string[] names = new string [1];
+				var names = new IntPtr[1];
 				GLib.Value[] vals = new GLib.Value [1];
-				names [0] = "model";
+				names [0] = GLib.Marshaller.StringToPtrGStrdup ("model");
 				vals [0] = new GLib.Value (store);
-				CreateNativeObject (names, vals);
-				vals [0].Dispose ();
+				CreateNativeObject (names, vals, 1);
 				return;
 			}
 
+			owned = true;
 			Raw = gtk_tree_view_new_with_model (store.Handle);
 		}
 

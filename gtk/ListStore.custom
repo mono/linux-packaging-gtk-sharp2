@@ -36,9 +36,12 @@
 			return ret;
 		}
 
+		[DllImport("libgtk-win32-2.0-0.dll", EntryPoint="gtk_tree_model_iter_n_children", CallingConvention = CallingConvention.Cdecl)]
+		static extern int gtk_tree_model_iter_n_children_ptr(IntPtr raw, IntPtr iter);
+
 		public int IterNChildren ()
 		{
-			int raw_ret = gtk_tree_model_iter_n_children (Handle, IntPtr.Zero);
+			int raw_ret = gtk_tree_model_iter_n_children_ptr (Handle, IntPtr.Zero);
 			int ret = raw_ret;
 			return ret;
 		}
@@ -105,22 +108,18 @@
 		{
 			Gtk.TreeIter iter = Append();
 
-			int col = 0;
-			foreach (object value in values) {
-				if (value != null) {
-					GLib.Value val = new GLib.Value (value);
-					SetValue (iter, col, val);
-					val.Dispose ();
-				}
-				col++;
-			}
+			SetValues (iter, values);
 
 			return iter;
 		}
 
 		public Gtk.TreeIter AppendValues (params object[] values)
 		{
-			return AppendValues ((Array) values);
+			Gtk.TreeIter iter = Append();
+
+			SetValues (iter, values);
+
+			return iter;
 		}
 
 		[DllImport("libgtk-win32-2.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
@@ -174,7 +173,7 @@
 
 		public ListStore (params GLib.GType[] types) : base (IntPtr.Zero)
 		{
-			CreateNativeObject (new string [0], new GLib.Value [0]);
+			CreateNativeObject (new IntPtr [0], new GLib.Value [0], 0);
 			ColumnTypes = types;
 		}
 
@@ -187,7 +186,7 @@
 				i++;
 			}
 
-			CreateNativeObject (new string [0], new GLib.Value [0]);
+			CreateNativeObject (new IntPtr [0], new GLib.Value [0], 0);
 			ColumnTypes = gtypes;
 		}
 
@@ -292,23 +291,24 @@
 			OnRowsReordered (path, iter, out dummy);
 			GLib.Value ret = GLib.Value.Empty;
 			GLib.ValueArray inst_and_params = new GLib.ValueArray (4);
-			GLib.Value[] vals = new GLib.Value [4];
-			vals [0] = new GLib.Value (this);
-			inst_and_params.Append (vals [0]);
-			vals [1] = new GLib.Value (path);
-			inst_and_params.Append (vals [1]);
-			vals [2] = new GLib.Value (iter);
-			inst_and_params.Append (vals [2]);
-			int cnt = IterNChildren ();
-			IntPtr new_order_ptr = Marshal.AllocHGlobal (Marshal.SizeOf (typeof (int)) * cnt);
-			Marshal.Copy (new_order, 0, new_order_ptr, cnt);
-			vals [3] = new GLib.Value (new_order_ptr);
-			inst_and_params.Append (vals [3]);
-			g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
-			Marshal.FreeHGlobal (new_order_ptr);
+			using (var val0 = new GLib.Value (this)) {
+				inst_and_params.Append (val0);
+				using (var val1 = new GLib.Value (path)) {
+					inst_and_params.Append (val1);
+					using (var val2 = new GLib.Value (iter)) {
+						inst_and_params.Append (val2);
 
-			foreach (GLib.Value v in vals)
-				v.Dispose ();
+						int cnt = IterNChildren ();
+						IntPtr new_order_ptr = Marshal.AllocHGlobal (sizeof (int) * cnt);
+						Marshal.Copy (new_order, 0, new_order_ptr, cnt);
+						using (var val3 = new GLib.Value (new_order_ptr)) {
+							inst_and_params.Append (val3);
+							g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);
+							Marshal.FreeHGlobal (new_order_ptr);
+						}
+					}
+				}
+			}
 		}
 
 		[GLib.Signal("rows_reordered")]

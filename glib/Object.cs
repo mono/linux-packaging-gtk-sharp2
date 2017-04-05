@@ -24,6 +24,7 @@ namespace GLib {
 
 	using System;
 	using System.Collections;
+	using System.Collections.Generic;
 	using System.ComponentModel;
 	using System.Reflection;
 	using System.Runtime.InteropServices;
@@ -34,17 +35,20 @@ namespace GLib {
 		IntPtr handle;
 		ToggleRef tref;
 		bool disposed = false;
+		internal protected bool owned = false;
 		Hashtable data;
-		static Hashtable Objects = new Hashtable();
-		static ArrayList PendingDestroys = new ArrayList ();
+		static Dictionary<IntPtr, ToggleRef> Objects = new Dictionary<IntPtr, ToggleRef>(IntPtrEqualityComparer.Instance);
+		static object lockObject = new object ();
+		static List<ToggleRef> PendingDestroys = new List<ToggleRef> ();
 		static bool idle_queued;
 
 		~Object ()
 		{
-			lock (PendingDestroys) {
+			lock (lockObject) {
 				lock (Objects) {
-					if (Objects[Handle] is ToggleRef)
-						PendingDestroys.Add (Objects [Handle]);
+					ToggleRef res;
+					if (Objects.TryGetValue (handle, out res))
+						PendingDestroys.Add (res);
 					Objects.Remove (Handle);
 				}
 				if (!idle_queued){
@@ -59,12 +63,11 @@ namespace GLib {
 
 		static bool PerformQueuedUnrefs ()
 		{
-			object [] references;
+			List<ToggleRef> references;
 
-			lock (PendingDestroys){
-				references = new object [PendingDestroys.Count];
-				PendingDestroys.CopyTo (references, 0);
-				PendingDestroys.Clear ();
+			lock (lockObject) {
+				references = PendingDestroys;
+				PendingDestroys = new List<ToggleRef> ();
 				idle_queued = false;
 			}
 
@@ -82,7 +85,7 @@ namespace GLib {
 			disposed = true;
 			ToggleRef toggle_ref;
 			lock(Objects) {
-				toggle_ref = Objects [Handle] as ToggleRef;
+				Objects.TryGetValue (Handle, out toggle_ref);
 				Objects.Remove (Handle);
 			}
 			try {
@@ -106,8 +109,8 @@ namespace GLib {
 
 			ToggleRef tr;
 			lock(Objects)
-				tr = (ToggleRef) Objects[o];
-			if (tr != null && tr.IsAlive) {
+				Objects.TryGetValue (o, out tr);
+			if (tr != null) {
 				return tr.Target;
 			}
 
@@ -120,30 +123,24 @@ namespace GLib {
 				return null;
 
 			Object obj = null;
+			ToggleRef toggle_ref = null;
+			lock(Objects)
+				Objects.TryGetValue (o, out toggle_ref);
 
-			lock(Objects) {
-				if (Objects.Contains (o)) {
-					ToggleRef toggle_ref = Objects [o] as ToggleRef;
-					if (toggle_ref != null && toggle_ref.IsAlive)
-						obj = toggle_ref.Target;
-				}
+			if (toggle_ref != null)
+				obj = toggle_ref.Target;
 
-				if (obj != null && obj.Handle == o) {
-					if (owned_ref)
-						g_object_unref (obj.Handle);
-					return obj;
-				}
+			if (obj != null && obj.Handle == o)
+				return obj;
 
-				if (!owned_ref)
-					g_object_ref (o);
-
-				obj = GLib.ObjectManager.CreateObject(o);
-			}
+			obj = GLib.ObjectManager.CreateObject (o);
 			if (obj == null) {
 				g_object_unref (o);
 				return null;
 			}
 
+			if (owned_ref)
+				g_object_unref (o);
 			return obj;
 		}
 
@@ -196,11 +193,11 @@ namespace GLib {
 
 		//  Key: The pointer to the ParamSpec of the property
 		//  Value: The corresponding PropertyInfo object
-		static Hashtable properties;
-		static Hashtable Properties {
+		static Dictionary<IntPtr, PropertyInfo> properties;
+		static Dictionary<IntPtr, PropertyInfo> Properties {
 			get {
 				if (properties == null)
-					properties = new Hashtable ();
+					properties = new Dictionary<IntPtr, PropertyInfo> (IntPtrEqualityComparer.Instance);
 				return properties;
 			}
 		}
@@ -345,7 +342,7 @@ namespace GLib {
 		}
 
 
-		static Hashtable g_types = new Hashtable ();
+		static Dictionary<Type, GType> g_types = new Dictionary<Type, GType> ();
 
 		protected GType LookupGType ()
 		{
@@ -354,12 +351,23 @@ namespace GLib {
 
 		protected internal static GType LookupGType (System.Type t)
 		{
-			if (g_types.Contains (t))
-				return (GType) g_types [t];
+			GType res;
+			if (g_types.TryGetValue (t, out res))
+				return res;
+
+			GTypeTypeAttribute geattr;
+			if ((geattr = (GTypeTypeAttribute)Attribute.GetCustomAttribute (t, typeof (GTypeTypeAttribute), false)) != null) {
+				var val = geattr.Type;
+				g_types [t] = val;
+				return val;
+			}
 
 			PropertyInfo pi = t.GetProperty ("GType", BindingFlags.DeclaredOnly | BindingFlags.Static | BindingFlags.Public);
-			if (pi != null)
-				return (GType) pi.GetValue (null, null);
+			if (pi != null) {
+				var val = (GType)pi.GetValue (null, null);
+				g_types [t] = val;
+				return val;
+			}
 
 			return RegisterGType (t);
 		}
@@ -388,12 +396,25 @@ namespace GLib {
 
 		protected virtual void CreateNativeObject (string[] names, GLib.Value[] vals)
 		{
-			IntPtr[] native_names = new IntPtr [names.Length];
-			for (int i = 0; i < names.Length; i++)
+			CreateNativeObject (names, vals, names.Length);
+		}
+
+		protected void CreateNativeObject (string [] names, GLib.Value [] vals, int count)
+		{
+			IntPtr[] native_names = new IntPtr [count];
+			for (int i = 0; i < count; i++)
 				native_names [i] = GLib.Marshaller.StringToPtrGStrdup (names [i]);
-			Raw = gtksharp_object_newv (LookupGType ().Val, names.Length, native_names, vals);
-			foreach (IntPtr p in native_names)
-				GLib.Marshaller.Free (p);
+			CreateNativeObject (native_names, vals, count);
+		}
+
+		protected void CreateNativeObject (IntPtr [] native_names, GLib.Value [] vals, int count)
+		{
+			owned = true;
+			Raw = gtksharp_object_newv (LookupGType ().Val, count, native_names, vals);
+			for (int i = 0; i < count; ++i) {
+				GLib.Marshaller.Free (native_names [i]);
+				vals [i].Dispose ();
+			}
 		}
 
 		protected virtual IntPtr Raw {
@@ -581,8 +602,8 @@ namespace GLib {
 
 		protected GLib.Value GetProperty (string name)
 		{
-			Value val = new Value (this, name);
 			IntPtr native_name = GLib.Marshaller.StringToPtrGStrdup (name);
+			Value val = new Value (this, native_name);
 			g_object_get_property (Raw, native_name, ref val);
 			GLib.Marshaller.Free (native_name);
 			return val;

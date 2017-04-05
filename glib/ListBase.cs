@@ -26,13 +26,14 @@ namespace GLib {
 	using System.Collections;
 	using System.Runtime.InteropServices;
 
+	public delegate void ListElementFree (IntPtr ptr);
 	public abstract class ListBase : IDisposable, ICollection, GLib.IWrapper, ICloneable {
 
 		private IntPtr list_ptr = IntPtr.Zero;
-		private int length = -1;
 		private bool managed = false;
 		internal bool elements_owned = false;
 		protected System.Type element_type = null;
+		private ListElementFree free_func;
 
 		abstract internal IntPtr NthData (uint index);
 		abstract internal int Length (IntPtr list);
@@ -40,12 +41,13 @@ namespace GLib {
 		abstract internal IntPtr Append (IntPtr current, IntPtr raw);
 		abstract internal IntPtr Prepend (IntPtr current, IntPtr raw);
 
-		internal ListBase (IntPtr list, System.Type element_type, bool owned, bool elements_owned)
+		internal ListBase (IntPtr list, System.Type element_type, bool owned, bool elements_owned, ListElementFree free_func)
 		{
 			list_ptr = list;
 			this.element_type = element_type;
 			managed = owned;
 			this.elements_owned = elements_owned;
+			this.free_func = free_func;
 		}
 
 		~ListBase ()
@@ -87,9 +89,7 @@ namespace GLib {
 		// ICollection
 		public int Count {
 			get {
-				if (length == -1)
-					length = Length (list_ptr);
-				return length;
+				return Length (list_ptr);
 			}
 		}
 
@@ -113,12 +113,24 @@ namespace GLib {
 
 		public void CopyTo (Array array, int index)
 		{
-			object[] orig = new object[Count];
+			CopyTo (array, index, Count);
+		}
+
+		internal void CopyTo (Array array, int index, int count)
+		{
+			object[] orig = new object[count];
 			int i = 0;
 			foreach (object o in this)
 				orig [i++] = o;
 
 			orig.CopyTo (array, index);
+		}
+
+		public void CopyTo<T> (T[] array, int index)
+		{
+			int i = index;
+			foreach (T o in this)
+				array [i++] = o;
 		}
 
 		public class FilenameString {
@@ -180,22 +192,33 @@ namespace GLib {
 			return ret;
 		}
 
-		[DllImport ("libglib-2.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
-		static extern void g_free (IntPtr item);
-
 		[DllImport ("libgobject-2.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
 		static extern void g_object_unref (IntPtr item);
 
 		public void Empty ()
 		{
-			if (elements_owned)
-				for (uint i = 0; i < Count; i++)
-					if (typeof (GLib.Object).IsAssignableFrom (element_type))
-						g_object_unref (NthData (i));
-					else if (typeof (GLib.Opaque).IsAssignableFrom (element_type))
-						GLib.Opaque.GetOpaque (NthData (i), element_type, true).Dispose ();
-					else
-						g_free (NthData (i));
+			if (elements_owned) {
+				var current = list_ptr;
+				if (typeof (GLib.Object).IsAssignableFrom (element_type)) {
+					while (current != IntPtr.Zero) {
+						var temp = current;
+						current = Next (temp);
+						g_object_unref (GetData (temp));
+					}
+				} else if (typeof (GLib.Opaque).IsAssignableFrom (element_type)) {
+					while (current != IntPtr.Zero) {
+						var temp = current;
+						current = Next (temp);
+						GLib.Opaque.GetOpaque (GetData (temp), element_type, true).Dispose ();
+					}
+				} else {
+					while (current != IntPtr.Zero) {
+						var temp = current;
+						current = Next (temp);
+						free_func (GetData (temp));
+					}
+				}
+			}
 
 			if (managed)
 				FreeList ();
@@ -270,7 +293,6 @@ namespace GLib {
 			if (list_ptr != IntPtr.Zero)
 				Free (list_ptr);
 			list_ptr = IntPtr.Zero;
-			length = -1;
 		}
 
 		// ICloneable

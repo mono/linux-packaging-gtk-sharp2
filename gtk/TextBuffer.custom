@@ -47,10 +47,13 @@ public void Delete (TextIter start, TextIter end )
 	Delete (ref start, ref end);
 }
 
+[DllImport("libgtk-win32-2.0-0.dll", EntryPoint="gtk_text_buffer_paste_clipboard", CallingConvention = CallingConvention.Cdecl)]
+static extern void gtk_text_buffer_paste_clipboard_ptr(IntPtr raw, IntPtr clipboard, IntPtr override_location, bool default_editable);
+
 // overload to paste clipboard contents at cursor editable by default.
 public void PasteClipboard (Gtk.Clipboard clipboard)
 {
-	gtk_text_buffer_paste_clipboard(Handle, clipboard.Handle, IntPtr.Zero, true);
+	gtk_text_buffer_paste_clipboard_ptr(Handle, clipboard.Handle, IntPtr.Zero, true);
 }
 
 [DllImport("libgtk-win32-2.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
@@ -160,6 +163,7 @@ public byte[] Serialize(Gtk.TextBuffer content_buffer, Gdk.Atom format, Gtk.Text
 	int sz = (int) (uint) length;
 	byte[] ret = new byte [sz];
 	Marshal.Copy (raw_ret, ret, 0, sz);
+	GLib.Marshaller.Free (raw_ret);
 	return ret;
 }
 
@@ -178,6 +182,7 @@ public Gdk.Atom[] DeserializeFormats {
 			IntPtr format = Marshal.ReadIntPtr (raw_ret, i * IntPtr.Size);
 			result [i] = format == IntPtr.Zero ? null : (Gdk.Atom) GLib.Opaque.GetOpaque (format, typeof (Gdk.Atom), false);
 		}
+		GLib.Marshaller.Free (raw_ret);
 		return result;
 	}
 }
@@ -191,6 +196,7 @@ public Gdk.Atom[] SerializeFormats {
 			IntPtr format = Marshal.ReadIntPtr (raw_ret, i * IntPtr.Size);
 			result [i] = format == IntPtr.Zero ? null : (Gdk.Atom) GLib.Opaque.GetOpaque (format, typeof (Gdk.Atom), false);
 		}
+		GLib.Marshaller.Free (raw_ret);
 		return result;
 	}
 }

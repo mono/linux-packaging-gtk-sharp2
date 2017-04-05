@@ -100,6 +100,7 @@
   <attr path="/api/namespace/class[@cname='GtkGlobal']/method[@name='PaintSlider']/*/*[@name='window']" name="type">GdkDrawable*</attr>
   <attr path="/api/namespace/class[@cname='GtkGlobal']/method[@name='PaintTab']/*/*[@name='window']" name="type">GdkDrawable*</attr>
   <attr path="/api/namespace/class[@cname='GtkGlobal']/method[@name='PaintVline']/*/*[@name='window']" name="type">GdkDrawable*</attr>
+  <attr path="/api/namespace/class[@cname='GtkGlobal']/method[@cname='gtk_get_current_event']" name="hidden">1</attr>
   <attr path="/api/namespace/class[@cname='GtkIdle_']" name="hidden">1</attr>
   <attr path="/api/namespace/class[@cname='GtkInit_']/method[@name='Check']" name="hidden">1</attr>
   <attr path="/api/namespace/class[@cname='GtkInit_']/method[@name='CheckAbiCheck']" name="hidden">1</attr>
@@ -307,6 +308,8 @@
   <attr path="/api/namespace/object[@cname='GtkClipboard']/method[@name='RequestText']/*/*[@name='callback']" name="scope">async</attr>
   <attr path="/api/namespace/object[@cname='GtkClipboard']/method[@name='SetWithData']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GtkClipboard']/method[@name='SetWithOwner']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GtkClipboard']/method[@name='WaitForTargets']/parameters/parameter[@name='targets']" name="pass_as">out</attr>
+  <attr path="/api/namespace/object[@cname='GtkClipboard']/method[@name='WaitForImage']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GtkClipboard']/method[@name='WaitForContents']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GtkClipboard']/method[@name='WaitForRichText']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GtkClipboard']/method[@name='RequestRichText']" name="hidden">1</attr>
@@ -797,15 +800,7 @@
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='Destroyed']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='Event']" name="name">ProcessEvent</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetChildRequisition']/*/*[@name='requisition']" name="pass_as">out</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetColormap']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetDefaultColormap']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetDefaultStyle']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetDefaultVisual']" name="needs_ref">1</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetEvents']/return-type" name="type">GdkEventMask</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetModifierStyle']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetParentWindow']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetStyle']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetVisual']" name="needs_ref">1</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='Intersect']/*/*[@name='intersection']" name="pass_as">out</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='IsFocus']" name="name">GetIsFocus</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='ListAccelClosures']" name="hidden">1</attr>
@@ -920,4 +915,39 @@
   <move-node path="/api/namespace/class[@cname='GtkGlobal']/method[@name='PaintSlider']">/api/namespace/object[@cname='GtkStyle']</move-node>
   <move-node path="/api/namespace/class[@cname='GtkGlobal']/method[@name='PaintTab']">/api/namespace/object[@cname='GtkStyle']</move-node>
   <move-node path="/api/namespace/class[@cname='GtkGlobal']/method[@name='PaintVline']">/api/namespace/object[@cname='GtkStyle']</move-node>
+  <attr path="/api/namespace/interface[@cname='GtkRecentChooser']/method[@cname='gtk_recent_chooser_get_uris']/return-type" name="null_term_array">1</attr>
+  <attr path="/api/namespace/interface[@cname='GtkRecentChooser']/method[@cname='gtk_recent_chooser_get_uris']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkRecentInfo']/method[@cname='gtk_recent_info_get_applications']/return-type" name="null_term_array">1</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkRecentInfo']/method[@cname='gtk_recent_info_get_applications']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkRecentInfo']/method[@cname='gtk_recent_info_get_groups']/return-type" name="null_term_array">1</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkRecentInfo']/method[@cname='gtk_recent_info_get_groups']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkSelectionData']/method[@cname='gtk_selection_data_get_uris']/return-type" name="null_term_array">1</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkSelectionData']/method[@cname='gtk_selection_data_get_uris']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkSelectionData']/method[@cname='gtk_selection_data_set_uris']/parameters/parameter[@name='uris']" name="null_term_array">1</attr>
+  <attr path="/api/namespace/struct[@cname='GtkRecentData']/field[@cname='groups']" name="null_term_array">1</attr>
+  <attr path="/api/namespace/struct[@cname='GtkRecentFilterInfo']/field[@cname='groups']" name="null_term_array">1</attr>
+  <attr path="/api/namespace/struct[@cname='GtkRecentFilterInfo']/field[@cname='applications']" name="null_term_array">1</attr>
+  <attr path="/api/namespace/object[@cname='GtkIMContext']/method[@cname='gtk_im_context_get_preedit_string']/parameters/parameter[@name='attrs']" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GtkIconView']/method[@cname='gtk_icon_view_get_tooltip_context']/parameters/parameter[@name='path']" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GtkTreeView']/method[@cname='gtk_tree_view_get_tooltip_context']/parameters/parameter[@name='path']" name="owned">true</attr>
+  <attr path="/api/namespace/class[@cname='GtkGlobal']/method[@cname='gtk_parse_args']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GtkLabel']/method[@cname='gtk_label_get']/parameters/parameter[@name='str']" name="pass_as">out</attr>
+  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@cname='gtk_widget_create_pango_context']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@cname='gtk_widget_create_pango_layout']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@cname='gtk_widget_render_icon']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkIconSet']/method[@cname='gtk_icon_set_render_icon']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GtkIconView']/method[@cname='gtk_icon_view_create_drag_icon']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/class[@cname='GtkPrint_']/method[@cname='gtk_print_run_page_setup_dialog']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GtkPrintSettings']/method[@cname='gtk_print_settings_get_page_ranges']" name="hidden">1</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkRecentInfo']/method[@cname='gtk_recent_info_get_icon']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkSelectionData']/method[@cname='gtk_selection_data_get_pixbuf']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GtkStyle']/method[@cname='gtk_style_render_icon']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GtkTreeView']/constructor[@cname='gtk_tree_view_new_with_model']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GtkMenu']/method[@cname='gtk_menu_popup']/parameters/parameter[@name='func']" name="scope">async</attr>
+  <!-- Fix some names to prevent API breaks. -->
+  <attr path="/api/namespace/interface[@cname='GtkRecentChooser']/method[@cname='gtk_recent_chooser_get_uris']" name="name">GetSelectedUris</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkSelectionData']/method[@cname='gtk_selection_data_get_uris']" name="name">GetSelectedUris</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkSelectionData']/method[@cname='gtk_selection_data_set_uris']" name="name">SetSelectedUris</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkRecentInfo']/method[@cname='gtk_recent_info_get_applications']" name="name">GetRecentApplications</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkRecentInfo']/method[@cname='gtk_recent_info_get_groups']" name="name">GetRecentGroups</attr>
 </metadata>

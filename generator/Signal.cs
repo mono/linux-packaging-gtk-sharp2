@@ -101,7 +101,7 @@ namespace GtkSharp.Generation {
 					Parameter p = parms [i];
 					if (p.PassAs != "" && !(p.Generatable is StructBase))
 						result += p.PassAs + " ";
-					result += (p.MarshalType + " arg" + i);
+					result += (p.MarshalCallbackType + " arg" + i);
 				}
 
 				return result;
@@ -191,7 +191,7 @@ namespace GtkSharp.Generation {
 				if (igen is BoxedGen)
 					return retval.CSType + ".GType";
 				if (igen is EnumGen)
-					return retval.CSType + "GType.GType";
+					return retval.CSType + "Attribute.GType";
 
 				switch (retval.CSType) {
 				case "bool":
@@ -216,17 +216,22 @@ namespace GtkSharp.Generation {
 				IGeneratable igen = p.Generatable;
 				if (p.PassAs != "out") {
 					if (igen is ManualGen) {
-						sw.WriteLine("\t\t\t\tif (arg{0} == IntPtr.Zero)", idx);
-						sw.WriteLine("\t\t\t\t\targs.Args[{0}] = null;", idx - 1);
-						sw.WriteLine("\t\t\t\telse {");
-						sw.WriteLine("\t\t\t\t\targs.Args[" + (idx - 1) + "] = " + p.FromNative ("arg" + idx)  + ";");
-						sw.WriteLine("\t\t\t\t}");
-					} else
-						sw.WriteLine("\t\t\t\targs.Args[" + (idx - 1) + "] = " + p.FromNative ("arg" + idx)  + ";");
+						sw.WriteLine ("\t\t\t\tif (arg{0} == IntPtr.Zero)", idx);
+						sw.WriteLine ("\t\t\t\t\targs.Args[{0}] = null;", idx - 1);
+						sw.WriteLine ("\t\t\t\telse {");
+						sw.WriteLine ("\t\t\t\t\targs.Args[" + (idx - 1) + "] = " + p.FromNative ("arg" + idx) + ";");
+						sw.WriteLine ("\t\t\t\t}");
+					} else {
+						sw.WriteLine ("\t\t\t\targs.Args[" + (idx - 1) + "] = " + p.FromNative ("arg" + idx) + ";");
+					}
 				}
-				if (igen is StructBase && p.PassAs == "ref")
-					finish += "\t\t\t\tif (arg" + idx + " != IntPtr.Zero) System.Runtime.InteropServices.Marshal.StructureToPtr (args.Args[" + (idx-1) + "], arg" + idx + ", false);\n";
-				else if (p.PassAs != "")
+				if (igen is StructBase && p.PassAs == "ref") {
+					if (SymbolTable.Table.IsBlittable (SymbolTable.Table [igen.CName])) {
+						finish += "\t\t\t\tunsafe { if (arg" + idx + " != IntPtr.Zero) " + string.Format ("*({0}*){1} = my{1}", p.CSType, p.Name) + "; }\n";
+					} else {
+						finish += "\t\t\t\tif (arg" + idx + " != IntPtr.Zero) System.Runtime.InteropServices.Marshal.StructureToPtr (args.Args[" + (idx - 1) + "], arg" + idx + ", false);\n";
+					}
+				} else if (p.PassAs != "")
 					finish += "\t\t\t\targ" + idx + " = " + igen.ToNativeReturn ("((" + p.CSType + ")args.Args[" + (idx - 1) + "])") + ";\n";
 			}
 			return finish;
@@ -424,11 +429,16 @@ namespace GtkSharp.Generation {
 			GenVMDeclaration (sw, null);
 			sw.WriteLine ("\t\t{");
 			MethodBody body = new MethodBody (parms);
-			body.Initialize (gen_info, false, false, String.Empty);
+			body.Initialize (gen_info, false, false, String.Empty, false);
 			sw.WriteLine ("\t\t\t{0}{1} ({2});", IsVoid ? "" : retval.MarshalType + " __ret = ", glue_name, GlueCallString);
 			body.Finish (sw, "");
-			if (!IsVoid)
+			if (!IsVoid) {
 				sw.WriteLine ("\t\t\treturn {0};", retval.FromNative ("__ret"));
+				var postRef = retval.PostFromNative ("__ret");
+				if (postRef != string.Empty)
+					sw.WriteLine ("\t\t\t" + postRef);
+
+			}
 			sw.WriteLine ("\t\t}\n");
 		}
 
@@ -442,42 +452,46 @@ namespace GtkSharp.Generation {
 				sw.WriteLine ("\t\t\tGLib.Value ret = new GLib.Value (" + ReturnGType + ");");
 
 			sw.WriteLine ("\t\t\tGLib.ValueArray inst_and_params = new GLib.ValueArray (" + parms.Count + ");");
-			sw.WriteLine ("\t\t\tGLib.Value[] vals = new GLib.Value [" + parms.Count + "];");
-			sw.WriteLine ("\t\t\tvals [0] = new GLib.Value (this);");
-			sw.WriteLine ("\t\t\tinst_and_params.Append (vals [0]);");
+			sw.WriteLine ("\t\t\tusing (var val0 = new GLib.Value (this)) {");
+			sw.WriteLine ("\t\t\t\tinst_and_params.Append (val0);");
 			string cleanup = "";
+			string indent = new string ('\t', 4);
 			for (int i = 1; i < parms.Count; i++) {
 				Parameter p = parms [i];
+				indent = new string ('\t', 3 + i);
 				if (p.PassAs != "") {
 					if (SymbolTable.Table.IsBoxed (p.CType)) {
 						if (p.PassAs == "ref")
-							sw.WriteLine ("\t\t\tvals [" + i + "] = new GLib.Value (" + p.Name + ");");
+							sw.WriteLine (indent + "using (var val" + i + " = new GLib.Value (" + p.Name + ")) {");
 						else
-							sw.WriteLine ("\t\t\tvals [" + i + "] = new GLib.Value ((GLib.GType)typeof (" + p.CSType + "));");
-						cleanup += "\t\t\t" + p.Name + " = (" + p.CSType + ") vals [" + i + "];\n";
+							sw.WriteLine (indent + "using (var val" + i + " = new GLib.Value ((GLib.GType)typeof (" + p.CSType + "))) {");
+						cleanup += indent + p.Name + " = (" + p.CSType + ") vals [" + i + "];\n";
 					} else {
 						if (p.PassAs == "ref")
-							sw.WriteLine ("\t\t\tIntPtr " + p.Name + "_ptr = GLib.Marshaller.StructureToPtrAlloc (" + p.Generatable.CallByName (p.Name) + ");");
+							sw.WriteLine (indent + "IntPtr " + p.Name + "_ptr = GLib.Marshaller.StructureToPtrAlloc (" + p.Generatable.CallByName (p.Name) + ");");
 						else
-							sw.WriteLine ("\t\t\tIntPtr " + p.Name + "_ptr = Marshal.AllocHGlobal (Marshal.SizeOf (typeof (" + p.MarshalType + ")));");
+							sw.WriteLine (indent + "IntPtr " + p.Name + "_ptr = Marshal.AllocHGlobal (Marshal.SizeOf (typeof (" + p.MarshalType + ")));");
 
-						sw.WriteLine ("\t\t\tvals [" + i + "] = new GLib.Value (" + p.Name + "_ptr);");
-						cleanup += "\t\t\t" + p.Name + " = " + p.FromNative ("(" + p.MarshalType + ") Marshal.PtrToStructure (" + p.Name + "_ptr, typeof (" + p.MarshalType + "))") + ";\n";
-						cleanup += "\t\t\tMarshal.FreeHGlobal (" + p.Name + "_ptr);\n";
+						sw.WriteLine (indent + "using (var val" + i + " = new GLib.Value (" + p.Name + "_ptr)) {");
+						cleanup += indent + p.Name + " = " + p.FromNative ("(" + p.MarshalType + ") Marshal.PtrToStructure (" + p.Name + "_ptr, typeof (" + p.MarshalType + "))") + ";\n";
+						cleanup += indent + "Marshal.FreeHGlobal (" + p.Name + "_ptr);\n";
 					}
 				} else if (p.IsLength && parms [i - 1].IsString)
-					sw.WriteLine ("\t\t\tvals [" + i + "] = new GLib.Value (System.Text.Encoding.UTF8.GetByteCount (" + parms [i-1].Name + "));");
+					sw.WriteLine (indent + "using (var val" + i + " = new GLib.Value (System.Text.Encoding.UTF8.GetByteCount (" + parms [i-1].Name + "))) {");
 				else
-					sw.WriteLine ("\t\t\tvals [" + i + "] = new GLib.Value (" + p.Name + ");");
+					sw.WriteLine (indent + "using (var val" + i + " = new GLib.Value (" + p.Name + ")) {");
 
-				sw.WriteLine ("\t\t\tinst_and_params.Append (vals [" + i + "]);");
+				sw.WriteLine (indent + "inst_and_params.Append (val" + i + ");");
 			}
 
-			sw.WriteLine ("\t\t\tg_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);");
+			sw.WriteLine (indent + "g_signal_chain_from_overridden (inst_and_params.ArrayPtr, ref ret);");
 			if (cleanup != "")
 				sw.WriteLine (cleanup);
-			sw.WriteLine ("\t\t\tforeach (GLib.Value v in vals)");
-			sw.WriteLine ("\t\t\t\tv.Dispose ();");
+			for (int i = 1; i < parms.Count; ++i) {
+				indent = new string ('\t', parms.Count - i + 3);
+				sw.WriteLine (indent + "}");
+			}
+			sw.WriteLine ("\t\t\t}");
 			if (!IsVoid) {
 				IGeneratable igen = SymbolTable.Table [retval.CType];
 				sw.WriteLine ("\t\t\t" + retval.CSType + " result = (" + (igen is EnumGen ? retval.CSType + ") (Enum" : retval.CSType) + ") ret;");
@@ -495,7 +509,7 @@ namespace GtkSharp.Generation {
 			string glue_name = String.Empty;
 			ManagedCallString call = new ManagedCallString (parms, true);
 			sw.WriteLine ("\t\t[UnmanagedFunctionPointer (CallingConvention.Cdecl)]");
-			sw.WriteLine ("\t\tdelegate " + retval.ToNativeType + " " + Name + "VMDelegate (" + parms.ImportSignature + ");\n");
+			sw.WriteLine ("\t\tdelegate " + retval.ToNativeType + " " + Name + "VMDelegate (" + parms.CallbackImportSignature + ");\n");
 
 			if (use_glue) {
 				glue = gen_info.GlueWriter;
@@ -513,7 +527,7 @@ namespace GtkSharp.Generation {
 			}
 
 			sw.WriteLine ("\t\tstatic {0} {1};\n", Name + "VMDelegate", Name + "VMCallback");
-			sw.WriteLine ("\t\tstatic " + retval.ToNativeType + " " + Name.ToLower() + "_cb (" + parms.ImportSignature + ")");
+			sw.WriteLine ("\t\tstatic " + retval.ToNativeType + " " + Name.ToLower() + "_cb (" + parms.CallbackImportSignature + ")");
 			sw.WriteLine ("\t\t{");
 			string unconditional = call.Unconditional ("\t\t\t");
 			if (unconditional.Length > 0)

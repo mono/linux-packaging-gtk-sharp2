@@ -96,6 +96,7 @@
   <attr path="/api/namespace/object[@cname='GdkDrawable']/method[@name='DrawPolygon']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GdkDrawable']/method[@name='GetSize']/*/*[@type='gint*']" name="pass_as">out</attr>
   <attr path="/api/namespace/object[@cname='GdkDrawable']/method[@name='SetData']/*/*[@name='destroy_func']" name="type">gpointer</attr>
+  <attr path="/api/namespace/object[@cname='GdkGC']/method[@name='GetValues']/parameters/parameter[@name='values']" name="pass_as">ref</attr>
   <attr path="/api/namespace/object[@cname='GdkImage']/field[@name='Mem']" name="access">private</attr>
   <attr path="/api/namespace/object[@cname='GdkImage']/field[@name='WindowingData']" name="access">private</attr>
   <attr path="/api/namespace/object[@cname='GdkKeymap']/method[@name='GetEntriesForKeycode']" name="hidden">1</attr>
@@ -118,13 +119,14 @@
   <attr path="/api/namespace/object[@cname='GdkPixbuf']/method[@name='SaveToCallbackv']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GdkPixbuf']/method[@name='ScaleSimple']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GdkPixbuf']/method[@name='RotateSimple']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GdkPixbuf']/method[@name='Flip']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GdkPixbuf']/property[@name='Pixels']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GdkPixbuf']/property" name="readable">true</attr>
   <attr path="/api/namespace/object[@cname='GdkPixbuf']/property" name="writeable">true</attr>
   <attr path="/api/namespace/object[@cname='GdkPixbuf']/property" name="construct-only">true</attr>
   <attr path="/api/namespace/struct[@cname='GdkPixbufFormat']/method[@name='GetExtensions']/return-type" name="null_term_array">1</attr> 
   <attr path="/api/namespace/struct[@cname='GdkPixbufFormat']/method[@name='GetMimeTypes']/return-type" name="null_term_array">1</attr> 
-  <attr path="/api/namespace/object[@cname='GdkPixbufLoader']/method[@name='GetPixbuf']" name="needs_ref">1</attr>
+  <attr path="/api/namespace/object[@cname='GdkPixbufLoader']/method[@name='GetPixbuf']/return-type" name="needs_ref">true</attr>
   <attr path="/api/namespace/object[@cname='GdkPixbufLoader']/method[@name='Write']/*/*[@name='buf']" name="array">1</attr>
   <attr path="/api/namespace/object[@cname='GdkPixmap']" name="parent">GdkDrawable</attr>
   <attr path="/api/namespace/object[@cname='GdkPixmap']/method[@name='CreateFromXpm']/*/*[@name='mask']" name="pass_as">out</attr>
@@ -205,7 +207,17 @@
   <attr path="/api/namespace/struct[@cname='GdkRgbCmap']/field[@name='NColors']" name="writeable">false</attr>
   <attr path="/api/namespace/struct[@cname='GdkTimeCoord']/field[@cname='axes']" name="array_len">128</attr>
   <attr path="/api/namespace/struct[@cname='GdkWindowObject']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GdkPixbufFormat']/method[@cname='gdk_pixbuf_format_get_extensions']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/struct[@cname='GdkPixbufFormat']/method[@cname='gdk_pixbuf_format_get_mime_types ']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/class[@cname='GdkChar_']/method[@cname='gdk_char_height']/parameters/parameter[@name='character']" name="type">guchar</attr>
+  <attr path="/api/namespace/class[@cname='GdkChar_']/method[@cname='gdk_char_width']/parameters/parameter[@name='character']" name="type">guchar</attr>
+  <attr path="/api/namespace/class[@cname='GdkChar_']/method[@cname='gdk_char_measure']/parameters/parameter[@name='character']" name="type">guchar</attr>
   <add-node path="/api"><symbol type="manual" cname="cairo_t" name="Cairo.Context"/></add-node>
   <add-node path="/api"><symbol type="manual" cname="cairo_font_options_t" name="Cairo.FontOptions"/></add-node>
+  <add-node path="/api/namespace/object[@cname='GdkWindow']">
+    <method name="GetType" cname="gdk_window_object_get_type" shared="true">
+      <return-type type="GType" />
+    </method>
+  </add-node>
 </metadata>
 

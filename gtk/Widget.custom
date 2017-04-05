@@ -34,11 +34,6 @@ public override void Destroy ()
 	base.Destroy ();
 }
 
-protected override void CreateNativeObject (string[] names, GLib.Value[] vals)
-{
-	base.CreateNativeObject (names, vals);
-}
-
 [DllImport("gtksharpglue-2", CallingConvention=CallingConvention.Cdecl)]
 static extern IntPtr gtksharp_gtk_widget_get_allocation (IntPtr style);
 
@@ -364,29 +359,37 @@ public Widget[] ListMnemonicLabels ()
 	IntPtr raw_ret = gtk_widget_list_mnemonic_labels (Handle);
 	if (raw_ret == IntPtr.Zero)
 		return new Widget [0];
-	GLib.List list = new GLib.List(raw_ret);
-	Widget[] result = new Widget [list.Count];
-	for (int i = 0; i < list.Count; i++)
-		result [i] = list [i] as Widget;
-	return result;
+	return GLib.Marshaller.ListPtrToArray<Widget> (raw_ret, typeof (GLib.List), true, false);
 }
+
+[DllImport("libgtk-win32-2.0-0.dll", EntryPoint="gtk_widget_modify_base", CallingConvention = CallingConvention.Cdecl)]
+static extern void gtk_widget_modify_base_ptr(IntPtr raw, int state, IntPtr color);
 
 public void ModifyBase (Gtk.StateType state)
 {
-	gtk_widget_modify_base (Handle, (int) state, IntPtr.Zero);
+	gtk_widget_modify_base_ptr (Handle, (int) state, IntPtr.Zero);
 }
+
+[DllImport("libgtk-win32-2.0-0.dll", EntryPoint="gtk_widget_modify_bg", CallingConvention = CallingConvention.Cdecl)]
+static extern void gtk_widget_modify_bg_ptr(IntPtr raw, int state, IntPtr color);
 
 public void ModifyBg (Gtk.StateType state)
 {
-	gtk_widget_modify_bg (Handle, (int) state, IntPtr.Zero);
+	gtk_widget_modify_bg_ptr (Handle, (int) state, IntPtr.Zero);
 }
+
+[DllImport("libgtk-win32-2.0-0.dll", EntryPoint="gtk_widget_modify_fg", CallingConvention = CallingConvention.Cdecl)]
+static extern void gtk_widget_modify_fg_ptr(IntPtr raw, int state, IntPtr color);
 
 public void ModifyFg (Gtk.StateType state)
 {
-	gtk_widget_modify_fg (Handle, (int) state, IntPtr.Zero);
+	gtk_widget_modify_fg_ptr (Handle, (int) state, IntPtr.Zero);
 }
+
+[DllImport("libgtk-win32-2.0-0.dll", EntryPoint="gtk_widget_modify_text", CallingConvention = CallingConvention.Cdecl)]
+static extern void gtk_widget_modify_text_ptr(IntPtr raw, int state, IntPtr color);
 
 public void ModifyText (Gtk.StateType state)
 {
-	gtk_widget_modify_text (Handle, (int) state, IntPtr.Zero);
+	gtk_widget_modify_text_ptr (Handle, (int) state, IntPtr.Zero);
 }

@@ -24,6 +24,7 @@ namespace GLib {
 
 	using System;
 	using System.Collections;
+	using System.Collections.Generic;
 	using System.IO;
 	using System.Reflection;
 	using System.Runtime.InteropServices;
@@ -65,8 +66,8 @@ namespace GLib {
 		public static readonly GType Param = new GType ((IntPtr) TypeFundamentals.TypeParam);
 		public static readonly GType Object = new GType ((IntPtr) TypeFundamentals.TypeObject);
 
-		static Hashtable types = new Hashtable ();
-		static Hashtable gtypes = new Hashtable ();
+		static Dictionary<IntPtr, Type> types = new Dictionary<IntPtr, Type> (IntPtrEqualityComparer.Instance);
+		static Dictionary<Type, GType> gtypes = new Dictionary<Type, GType> ();
 
 		public static void Register (GType native_type, System.Type type)
 		{
@@ -98,7 +99,6 @@ namespace GLib {
 			Register (GType.String, typeof (string));
 			Register (GType.Pointer, typeof (IntPtr));
 			Register (GType.Object, typeof (GLib.Object));
-			Register (GType.Pointer, typeof (IntPtr));
 
 			// One-way mapping
 			gtypes[typeof (char)] = GType.UInt;
@@ -108,26 +108,39 @@ namespace GLib {
 		{
 			GType gtype;
 
-			if (gtypes.Contains (type))
-				return (GType)gtypes[type];
-
+			if (gtypes.TryGetValue (type, out gtype))
+				return gtype;
+			
 			if (type.IsSubclassOf (typeof (GLib.Object))) {
 				gtype = GLib.Object.LookupGType (type);
 				Register (gtype, type);
 				return gtype;
 			}
 
-			PropertyInfo pi = type.GetProperty ("GType", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-			if (pi != null)
-				gtype = (GType) pi.GetValue (null, null);
-			else if (type.IsDefined (typeof (GTypeAttribute), false)) {
-				GTypeAttribute gattr = (GTypeAttribute)Attribute.GetCustomAttribute (type, typeof (GTypeAttribute), false);
-				pi = gattr.WrapperType.GetProperty ("GType", BindingFlags.Public | BindingFlags.Static);
-				gtype = (GType) pi.GetValue (null, null);
-			} else if (type.IsSubclassOf (typeof (GLib.Opaque)))
-				gtype = GType.Pointer;
-			else
-				gtype = ManagedValue.GType;
+			if (type.IsEnum) {
+				GTypeTypeAttribute geattr;
+				GTypeAttribute gattr;
+				if ((geattr = (GTypeTypeAttribute)Attribute.GetCustomAttribute (type, typeof (GTypeTypeAttribute), false)) != null) {
+					gtype = geattr.Type;
+				} else if ((gattr = (GTypeAttribute)Attribute.GetCustomAttribute (type, typeof (GTypeAttribute), false)) != null) {
+					// This should never happen for generated code, keep it in place for other users of the API.
+					var pi = gattr.WrapperType.GetProperty ("GType", BindingFlags.Public | BindingFlags.Static);
+					gtype = (GType)pi.GetValue (null, null);
+				} else
+					gtype = ManagedValue.GType;
+			} else {
+				GTypeTypeAttribute geattr;
+				PropertyInfo pi;
+				if ((geattr = (GTypeTypeAttribute)Attribute.GetCustomAttribute (type, typeof (GTypeTypeAttribute), false)) != null) {
+					gtype = geattr.Type;
+				} else if ((pi = type.GetProperty ("GType", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy)) != null) {
+					gtype = (GType)pi.GetValue (null, null);
+				} else if (type.IsSubclassOf (typeof (GLib.Opaque)))
+					gtype = GType.Pointer;
+				else
+					gtype = ManagedValue.GType;
+			}
+
 
 			Register (gtype, type);
 			return gtype;
@@ -159,12 +172,12 @@ namespace GLib {
 
 		public static Type LookupType (IntPtr typeid)
 		{
-			if (types.Contains (typeid))
-				return (Type)types[typeid];
+			Type result;
+			if (types.TryGetValue (typeid, out result))
+				return result;
 
 			string native_name = Marshaller.Utf8PtrToString (g_type_name (typeid));
 			string type_name = GetQualifiedName (native_name);
-			Type result = null;
 			Assembly[] assemblies = (Assembly[]) AppDomain.CurrentDomain.GetAssemblies ().Clone ();
 			foreach (Assembly asm in assemblies) {
 				result = asm.GetType (type_name);

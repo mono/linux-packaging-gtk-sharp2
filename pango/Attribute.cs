@@ -24,84 +24,93 @@ namespace Pango {
 	public class Attribute : GLib.IWrapper, IDisposable {
 
 		IntPtr raw;
+		bool owned;
 
-		internal Attribute (IntPtr raw)
+		internal Attribute (IntPtr raw, bool owned)
 		{
 			this.raw = raw;
+			this.owned = owned;
 		}
 
 		[DllImport("pangosharpglue-2", CallingConvention=CallingConvention.Cdecl)]
 		static extern Pango.AttrType pangosharp_attribute_get_attr_type (IntPtr raw);
 
-		public static Attribute GetAttribute (IntPtr raw)
+		public static Attribute GetAttribute (IntPtr raw, bool owned)
 		{
 			switch (pangosharp_attribute_get_attr_type (raw)) {
 			case Pango.AttrType.Language:
-				return new AttrLanguage (raw);
+				return new AttrLanguage (raw, owned);
 			case Pango.AttrType.Family:
-				return new AttrFamily (raw);
+				return new AttrFamily (raw, owned);
 			case Pango.AttrType.Style:
-				return new AttrStyle (raw);
+				return new AttrStyle (raw, owned);
 			case Pango.AttrType.Weight:
-				return new AttrWeight (raw);
+				return new AttrWeight (raw, owned);
 			case Pango.AttrType.Variant:
-				return new AttrVariant (raw);
+				return new AttrVariant (raw, owned);
 			case Pango.AttrType.Stretch:
-				return new AttrStretch (raw);
+				return new AttrStretch (raw, owned);
 			case Pango.AttrType.Size:
-				return new AttrSize (raw);
+				return new AttrSize (raw, owned);
 			case Pango.AttrType.FontDesc:
-				return new AttrFontDesc (raw);
+				return new AttrFontDesc (raw, owned);
 			case Pango.AttrType.Foreground:
-				return new AttrForeground (raw);
+				return new AttrForeground (raw, owned);
 			case Pango.AttrType.Background:
-				return new AttrBackground (raw);
+				return new AttrBackground (raw, owned);
 			case Pango.AttrType.Underline:
-				return new AttrUnderline (raw);
+				return new AttrUnderline (raw, owned);
 			case Pango.AttrType.Strikethrough:
-				return new AttrStrikethrough (raw);
+				return new AttrStrikethrough (raw, owned);
 			case Pango.AttrType.Rise:
-				return new AttrRise (raw);
+				return new AttrRise (raw, owned);
 			case Pango.AttrType.Shape:
-				return new AttrShape (raw);
+				return new AttrShape (raw, owned);
 			case Pango.AttrType.Scale:
-				return new AttrScale (raw);
+				return new AttrScale (raw, owned);
 			case Pango.AttrType.Fallback:
-				return new AttrFallback (raw);
+				return new AttrFallback (raw, owned);
 #if GTK_SHARP_2_6
 			case Pango.AttrType.LetterSpacing:
-				return new AttrLetterSpacing (raw);
+				return new AttrLetterSpacing (raw, owned);
 			case Pango.AttrType.UnderlineColor:
-				return new AttrUnderlineColor (raw);
+				return new AttrUnderlineColor (raw, owned);
 			case Pango.AttrType.StrikethroughColor:
-				return new AttrStrikethroughColor (raw);
+				return new AttrStrikethroughColor (raw, owned);
 #endif
 #if GTK_SHARP_2_12
 			case Pango.AttrType.Gravity:
-				return new AttrGravity (raw);
+				return new AttrGravity (raw, owned);
 			case Pango.AttrType.GravityHint:
-				return new AttrGravityHint (raw);
+				return new AttrGravityHint (raw, owned);
 #endif
 			default:
-				return new Attribute (raw);
+				return new Attribute (raw, owned);
 			}
 		}
+
+		public static Attribute GetAttribute (IntPtr raw)
+		{
+			return GetAttribute (raw, false);
+		}
+
+		[DllImport("libpango-1.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
+		static extern void pango_attribute_destroy (IntPtr raw);
 
 		~Attribute ()
 		{
 			Dispose ();
 		}
 
-		[DllImport("libpango-1.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
-		static extern void pango_attribute_destroy (IntPtr raw);
-
 		public void Dispose ()
 		{
+			if (!owned)
+				return;
+			
 			if (raw != IntPtr.Zero) {
 				pango_attribute_destroy (raw);
 				raw = IntPtr.Zero;
 			}
-			GC.SuppressFinalize (this);
 		}
 
 		public IntPtr Handle {
@@ -156,7 +165,7 @@ namespace Pango {
 		static extern IntPtr pango_attribute_copy (IntPtr raw);
 
 		public Pango.Attribute Copy () {
-			return GetAttribute (pango_attribute_copy (raw));
+			return GetAttribute (pango_attribute_copy (raw), true);
 		}
 
 		[DllImport("libpango-1.0-0.dll", CallingConvention=CallingConvention.Cdecl)]
