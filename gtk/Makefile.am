@@ -22,6 +22,7 @@ sources = 				\
 	BindingAttribute.cs		\
 	ChildPropertyAttribute.cs	\
 	ITreeNode.cs			\
+	IntPtrEqualityComparer.cs	\
 	Key.cs				\
 	MoveFocusHandler.cs		\
 	NodeCellDataFunc.cs		\
@@ -107,6 +108,13 @@ customs = 				\
 	RadioButton.custom		\
 	RadioMenuItem.custom		\
 	RadioToolButton.custom		\
+	RecentAction.custom			\
+	RecentChooserAdapter.custom	\
+	RecentChooserDialog.custom	\
+	RecentChooserDefault.custom	\
+	RecentChooserMenu.custom	\
+	RecentChooserWidget.custom	\
+	RecentInfo.custom			\
 	ScrolledWindow.custom		\
 	SelectionData.custom		\
 	Settings.custom			\

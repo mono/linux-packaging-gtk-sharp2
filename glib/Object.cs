@@ -35,9 +35,9 @@ namespace GLib {
 		IntPtr handle;
 		ToggleRef tref;
 		bool disposed = false;
-		bool owned = true;
+		internal protected bool owned = false;
 		Hashtable data;
-		static Dictionary<IntPtr, ToggleRef> Objects = new Dictionary<IntPtr, ToggleRef>();
+		static Dictionary<IntPtr, ToggleRef> Objects = new Dictionary<IntPtr, ToggleRef>(IntPtrEqualityComparer.Instance);
 		static object lockObject = new object ();
 		static List<ToggleRef> PendingDestroys = new List<ToggleRef> ();
 		static bool idle_queued;
@@ -112,7 +112,7 @@ namespace GLib {
 			ToggleRef tr;
 			lock(Objects)
 				Objects.TryGetValue (o, out tr);
-			if (tr != null && tr.IsAlive) {
+			if (tr != null) {
 				return tr.Target;
 			}
 
@@ -129,7 +129,7 @@ namespace GLib {
 			lock(Objects)
 				Objects.TryGetValue (o, out toggle_ref);
 
-			if (toggle_ref != null && toggle_ref.IsAlive)
+			if (toggle_ref != null)
 				obj = toggle_ref.Target;
 
 			if (obj != null && obj.Handle == o)
@@ -141,7 +141,8 @@ namespace GLib {
 				return null;
 			}
 
-			obj.owned = owned_ref;
+			if (owned_ref)
+				g_object_unref (o);
 			return obj;
 		}
 
@@ -194,11 +195,11 @@ namespace GLib {
 
 		//  Key: The pointer to the ParamSpec of the property
 		//  Value: The corresponding PropertyInfo object
-		static Hashtable properties;
-		static Hashtable Properties {
+		static Dictionary<IntPtr, PropertyInfo> properties;
+		static Dictionary<IntPtr, PropertyInfo> Properties {
 			get {
 				if (properties == null)
-					properties = new Hashtable ();
+					properties = new Dictionary<IntPtr, PropertyInfo> (IntPtrEqualityComparer.Instance);
 				return properties;
 			}
 		}
@@ -410,6 +411,7 @@ namespace GLib {
 
 		protected void CreateNativeObject (IntPtr [] native_names, GLib.Value [] vals, int count)
 		{
+			owned = true;
 			Raw = gtksharp_object_newv (LookupGType ().Val, count, native_names, vals);
 			for (int i = 0; i < count; ++i) {
 				GLib.Marshaller.Free (native_names [i]);

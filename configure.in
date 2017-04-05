@@ -1,5 +1,5 @@
 
-AC_INIT([gtk-sharp], [2.12.40])
+AC_INIT([gtk-sharp], [2.12.43])
 AC_CONFIG_SRCDIR(README)
 AC_CANONICAL_SYSTEM
 AC_CONFIG_HEADERS(config.h)

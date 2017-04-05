@@ -54,7 +54,7 @@ namespace GtkSharp.Generation {
 
 			if (Name == "GetType") {
 				Name = "GetGType";
-				cacheValue = !(container_type is StructBase);
+				cacheValue = !(container_type is StructBase) && !retval.IsVoid;
 				cacheName = "_gtype";
 			}
 		}
@@ -301,7 +301,7 @@ namespace GtkSharp.Generation {
 				implementor.Prepare (sw, indent + "\t\t\t");
 			if (IsAccessor)
 				Body.InitAccessor (sw, Signature, indent);
-			Body.Initialize(gen_info, is_get, is_set, indent);
+			Body.Initialize(gen_info, is_get, is_set, indent, false);
 
 			if (HasWin32Utf8Variant) {
 				if (!retval.IsVoid)
@@ -319,6 +319,10 @@ namespace GtkSharp.Generation {
 					sw.WriteLine(indent + "\t\t\t" + "else");
 					sw.WriteLine(indent + "\t\t\t\traw_ret = " + CName + call + ";");
 					sw.WriteLine(indent + "\t\t\t" + retval.CSType + " ret = " + retval.FromNative ("raw_ret") + ";");
+					var postRef = retval.PostFromNative ("raw_ret");
+					if (postRef != string.Empty)
+						sw.WriteLine (indent + "\t\t\t" + postRef);
+					sw.WriteLine ();
 				}
 			} else {
 				sw.Write(indent + "\t\t\t");
@@ -327,6 +331,9 @@ namespace GtkSharp.Generation {
 				else if (!cacheValue) {
 					sw.WriteLine(retval.MarshalType + " raw_ret = " + CName + call + ";");
 					sw.WriteLine(indent + "\t\t\t" + retval.CSType + " ret = " + retval.FromNative ("raw_ret") + ";");
+					var postRef = retval.PostFromNative ("raw_ret");
+					if (postRef != string.Empty)
+						sw.WriteLine (indent + "\t\t\t" + postRef);
 				}
 			}
 

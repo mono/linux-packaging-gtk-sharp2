@@ -800,15 +800,7 @@
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='Destroyed']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='Event']" name="name">ProcessEvent</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetChildRequisition']/*/*[@name='requisition']" name="pass_as">out</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetColormap']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetDefaultColormap']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetDefaultStyle']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetDefaultVisual']" name="needs_ref">1</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetEvents']/return-type" name="type">GdkEventMask</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetModifierStyle']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetParentWindow']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetStyle']" name="needs_ref">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='GetVisual']" name="needs_ref">1</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='Intersect']/*/*[@name='intersection']" name="pass_as">out</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='IsFocus']" name="name">GetIsFocus</attr>
   <attr path="/api/namespace/object[@cname='GtkWidget']/method[@name='ListAccelClosures']" name="hidden">1</attr>
@@ -950,8 +942,12 @@
   <attr path="/api/namespace/boxed[@cname='GtkRecentInfo']/method[@cname='gtk_recent_info_get_icon']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/boxed[@cname='GtkSelectionData']/method[@cname='gtk_selection_data_get_pixbuf']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GtkStyle']/method[@cname='gtk_style_render_icon']/return-type" name="owned">true</attr>
-  <attr path="/api/namespace/object[@cname='GtkTreeView']/property[@cname='model']" name="readable">false</attr>
-  <attr path="/api/namespace/object[@cname='GtkTreeView']/property[@cname='model']" name="writeable">false</attr>
-  <attr path="/api/namespace/object[@cname='GtkTreeView']/method[@cname='gtk_tree_view_get_model']" name="hidden">1</attr>
-  <attr path="/api/namespace/object[@cname='GtkTreeView']/method[@cname='gtk_tree_view_set_model']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GtkTreeView']/constructor[@cname='gtk_tree_view_new_with_model']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GtkMenu']/method[@cname='gtk_menu_popup']/parameters/parameter[@name='func']" name="scope">async</attr>
+  <!-- Fix some names to prevent API breaks. -->
+  <attr path="/api/namespace/interface[@cname='GtkRecentChooser']/method[@cname='gtk_recent_chooser_get_uris']" name="name">GetSelectedUris</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkSelectionData']/method[@cname='gtk_selection_data_get_uris']" name="name">GetSelectedUris</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkSelectionData']/method[@cname='gtk_selection_data_set_uris']" name="name">SetSelectedUris</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkRecentInfo']/method[@cname='gtk_recent_info_get_applications']" name="name">GetRecentApplications</attr>
+  <attr path="/api/namespace/boxed[@cname='GtkRecentInfo']/method[@cname='gtk_recent_info_get_groups']" name="name">GetRecentGroups</attr>
 </metadata>

@@ -28,6 +28,7 @@ sources =		 			\
 	DestroyNotify.cs			\
 	EnumWrapper.cs				\
 	ExceptionManager.cs			\
+	FastActivator.cs			\
 	FileUtils.cs				\
 	Format.cs				\
 	GException.cs				\
@@ -40,6 +41,7 @@ sources =		 			\
 	Idle.cs					\
 	IgnoreClassInitializersAttribute.cs	\
 	InitiallyUnowned.cs			\
+	IntPtrEqualityComparer.cs	\
 	IOChannel.cs				\
 	IWrapper.cs				\
 	ListBase.cs				\
