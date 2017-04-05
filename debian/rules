@@ -7,7 +7,7 @@ export MONO_SHARED_DIR=$(CURDIR)
 CFLAGS ?= -O2 -Wall -g
 LDFLAGS += -Wl,-z,defs -Wl,-O1 -Wl,--as-needed
 
-API_VERSION = 2.12.10-1ubuntu1
+API_VERSION = 2.12.40
 
 UPVERSION = $(shell dpkg-parsechangelog | grep ^Vers | cut -d\  -f2 | sed 's,-.*,,')
 NEXT_UPVERSION = $(shell perl -e '$$_=pop; s/(\d+)$$/$$1+1/e; print' $(UPVERSION))
