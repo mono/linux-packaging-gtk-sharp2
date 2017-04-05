@@ -95,8 +95,6 @@ namespace GLib {
 				Console.WriteLine ("Exception while disposing a " + this + " in Gtk#");
 				throw e;
 			}
-			if (owned)
-				g_object_unref (handle);
 			handle = IntPtr.Zero;
 			GC.SuppressFinalize (this);
 		}

@@ -641,42 +641,6 @@ namespace GtkSharp.Generation {
 		}
 	}
 
-	public class ByRefParameter : Parameter
-	{
-
-		public ByRefParameter (XmlElement elem) : base (elem) { }
-
-		public override string MarshalType {
-			get {
-				return "ref " + CallName;
-			}
-		}
-
-		public override string [] Prepare {
-			get {
-				return new string [0];
-			}
-		}
-
-		public override string CallString {
-			get {
-				return "ref " + CallName;
-			}
-		}
-
-		public override string [] Finish {
-			get {
-				return new string [0];
-			}
-		}
-
-		public override string NativeSignature {
-			get {
-				return "ref " + CSType + " " + CallName;
-			}
-		}
-	}
-
 	public class Parameters : IEnumerable {
 		
 		ArrayList param_list = new ArrayList ();

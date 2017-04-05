@@ -37,7 +37,6 @@ namespace Pango {
 
 		public static Attribute GetAttribute (IntPtr raw, bool owned)
 		{
-			Attribute attr;
 			switch (pangosharp_attribute_get_attr_type (raw)) {
 			case Pango.AttrType.Language:
 				return new AttrLanguage (raw, owned);
@@ -88,8 +87,6 @@ namespace Pango {
 			default:
 				return new Attribute (raw, owned);
 			}
-			attr.owned = owned;
-			return attr;
 		}
 
 		public static Attribute GetAttribute (IntPtr raw)
