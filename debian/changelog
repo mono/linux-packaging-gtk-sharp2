@@ -1,3 +1,14 @@
+gtk-sharp2 (2.12.43-0xamarin5) alpha; urgency=medium
+
+  [ Xamarin Public Jenkins (auto-signing) ]
+  * Packaging bugfix:
+
+  [ Ubuntu ]
+  * [c335da4] Merge branch 'master' of github.com:mono/linux-packaging-
+    gtk-sharp2 [8ab82f1] Fix gbp import out-of-sync files
+
+ -- Xamarin Public Jenkins (auto-signing) <releng@xamarin.com>  Wed, 05 Apr 2017 11:51:37 +0000
+
 gtk-sharp2 (2.12.43-0xamarin4) alpha; urgency=medium
 
   [ Xamarin Public Jenkins (auto-signing) ]
