@@ -47,8 +47,6 @@ BuildRequires:  vte-devel
 Version:	2.12.43
 Release:	0.xamarin.3
 Source:         %{_name}-%{version}.tar.gz
-#Patch0:         gtk-sharp2-glib-2_31.patch
-# PATCH-FIX-UPSTREAM gtk-sharp2-gmcs-as-compiler.patch dimstar@opensuse.org -- Use gmcs as prefered mono compiler.
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
