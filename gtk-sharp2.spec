@@ -30,7 +30,6 @@ Obsoletes:      gtk-sharp2-64bit
 %ifarch  %ix86 ppc
 Obsoletes:      gtk-sharp2-32bit
 %endif
-BuildRequires:  gtkhtml2-devel
 BuildRequires:  libglade2-devel
 BuildRequires:  libtool
 BuildRequires:  mono-devel
