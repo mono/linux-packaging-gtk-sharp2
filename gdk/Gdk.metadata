@@ -20,6 +20,11 @@
   <attr path="/api/namespace/class[@cname='GdkDrag_']/method[@name='FindWindow']/*/*[@name='dest_window']" name="pass_as">out</attr>
   <attr path="/api/namespace/class[@cname='GdkDrag_']/method[@name='FindWindowForScreen']/*/*[@name='dest_window']" name="pass_as">out</attr>
   <attr path="/api/namespace/class[@cname='GdkEvent_']/method[@name='HandlerSet']" name="hidden">1</attr>
+  <attr path="/api/namespace/class[@cname='GdkEvent_']/method[@name='Copy']" name="hidden">1</attr>
+  <attr path="/api/namespace/class[@cname='GdkEvent_']/method[@name='Get']" name="hidden">1</attr>
+  <attr path="/api/namespace/class[@cname='GdkEvent_']/method[@name='GetGraphicsExpose']" name="hidden">1</attr>
+  <attr path="/api/namespace/class[@cname='GdkEvent_']/method[@name='New']" name="hidden">1</attr>
+  <attr path="/api/namespace/class[@cname='GdkEvent_']/method[@name='Peek']" name="hidden">1</attr>
   <attr path="/api/namespace/class[@cname='GdkEvent_']" name="name">EventHelper</attr>
   <attr path="/api/namespace/class[@cname='GdkInput_']/method[@name='Add']" name="hidden">1</attr>
   <attr path="/api/namespace/class[@cname='GdkInput_']/method[@name='AddFull']" name="hidden">1</attr>
@@ -81,6 +86,8 @@
   <attr path="/api/namespace/object[@cname='GdkDisplay']/method[@name='SupportsComposite']" name="name">GetSupportsComposite</attr>
   <attr path="/api/namespace/object[@cname='GdkDisplay']/method[@name='SupportsInputShapes']" name="name">GetSupportsInputShapes</attr>
   <attr path="/api/namespace/object[@cname='GdkDisplay']/method[@name='SupportsShapes']" name="name">GetSupportsShapes</attr>
+  <attr path="/api/namespace/object[@cname='GdkDisplay']/method[@name='PeekEvent']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GdkDisplay']/method[@name='GetEvent']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GdkDisplayManager']/method[@name='ListDisplays']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GdkDragContext']/field[@cname='protocol']" name="name">DragProtocol</attr>
   <attr path="/api/namespace/object[@cname='GdkDragContext']/field[@cname='targets']" name="hidden">1</attr>
@@ -126,7 +133,6 @@
   <attr path="/api/namespace/object[@cname='GdkPixbuf']/property" name="construct-only">true</attr>
   <attr path="/api/namespace/struct[@cname='GdkPixbufFormat']/method[@name='GetExtensions']/return-type" name="null_term_array">1</attr> 
   <attr path="/api/namespace/struct[@cname='GdkPixbufFormat']/method[@name='GetMimeTypes']/return-type" name="null_term_array">1</attr> 
-  <attr path="/api/namespace/object[@cname='GdkPixbufLoader']/method[@name='GetPixbuf']/return-type" name="needs_ref">true</attr>
   <attr path="/api/namespace/object[@cname='GdkPixbufLoader']/method[@name='Write']/*/*[@name='buf']" name="array">1</attr>
   <attr path="/api/namespace/object[@cname='GdkPixmap']" name="parent">GdkDrawable</attr>
   <attr path="/api/namespace/object[@cname='GdkPixmap']/method[@name='CreateFromXpm']/*/*[@name='mask']" name="pass_as">out</attr>
