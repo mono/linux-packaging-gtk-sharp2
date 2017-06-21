@@ -1,3 +1,9 @@
+gtk-sharp2 (2.12.45-0xamarin1) alpha; urgency=medium
+
+  * New release - gtk-sharp-2.12.45.tar.gz
+
+ -- Xamarin Public Jenkins (auto-signing) <releng@xamarin.com>  Wed, 21 Jun 2017 10:56:32 +0000
+
 gtk-sharp2 (2.12.43-0xamarin7) alpha; urgency=medium
 
   * Packaging bugfix:
