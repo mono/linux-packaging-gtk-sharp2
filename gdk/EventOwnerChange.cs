@@ -26,7 +26,8 @@ namespace Gdk {
 
 	public class EventOwnerChange : Event {
 
-		public EventOwnerChange (IntPtr handle) : base (handle) {}
+		public EventOwnerChange (IntPtr handle) : base (handle) { }
+		public EventOwnerChange (IntPtr raw, bool owned) : base (raw, owned) { }
 
 		struct NativeStruct {
 			public Gdk.EventType type;
@@ -40,7 +41,7 @@ namespace Gdk {
 		}
 
 		NativeStruct Native {
-			get { return (NativeStruct) Marshal.PtrToStructure (Handle, typeof (NativeStruct)); }
+			get { return Marshal.PtrToStructure<NativeStruct> (Handle); }
 		}
 
 		public uint Owner {

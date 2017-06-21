@@ -96,14 +96,14 @@ namespace GtkSharp.Generation {
 		public override string FromNative (string var)
 		{
 			if (DisableNew)
-				return var + " == IntPtr.Zero ? " + QualifiedName + ".Zero : (" + QualifiedName + ") System.Runtime.InteropServices.Marshal.PtrToStructure (" + var + ", typeof (" + QualifiedName + "))";
+				return var + " == IntPtr.Zero ? " + QualifiedName + ".Zero : System.Runtime.InteropServices.Marshal.PtrToStructure<" + QualifiedName + "> (var)";
 			else
 				return QualifiedName + ".New (" + var + ")";
 		}
 		
 		public string AllocNative (string var)
 		{
-			return "GLib.Marshaller.StructureToPtrAlloc (" + var + ")";
+			return "GLib.Marshaller.StructureToPtrAlloc<" + QualifiedName + "> (" + var + ")";
 		}
 
 		public string ReleaseNative (string var)
@@ -149,6 +149,13 @@ namespace GtkSharp.Generation {
 			return base.Validate ();
 		}
 
+		string GetInterfaceImplExtra ()
+		{
+			if (Elem.HasAttribute ("iequatable") && Elem.GetAttribute ("iequatable") == "1")
+				return " : IEquatable<" + Name + ">";
+			return string.Empty;
+		}
+
 		public override void Generate (GenerationInfo gen_info)
 		{
 			bool need_close = false;
@@ -172,7 +179,7 @@ namespace GtkSharp.Generation {
 			sw.WriteLine ("\t[StructLayout(LayoutKind.Sequential)]");
 			GenerateAttribute (sw);
 			string access = IsInternal ? "internal" : "public";
-			sw.WriteLine ("\t" + access + " struct " + Name + " {");
+			sw.WriteLine ("\t" + access + " struct " + Name + GetInterfaceImplExtra () + " {");
 			sw.WriteLine ();
 
 			GenFields (gen_info);
@@ -204,7 +211,7 @@ namespace GtkSharp.Generation {
 			sw.WriteLine ("\t\tpublic static " + QualifiedName + " New (IntPtr raw) {");
 			sw.WriteLine ("\t\t\tif (raw == IntPtr.Zero)");
 			sw.WriteLine ("\t\t\t\treturn {0}.Zero;", QualifiedName);
-			sw.WriteLine ("\t\t\treturn ({0}) Marshal.PtrToStructure (raw, typeof ({0}));", QualifiedName);
+			sw.WriteLine ("\t\t\treturn Marshal.PtrToStructure<{0}> (raw);", QualifiedName);
 			sw.WriteLine ("\t\t}");
 			sw.WriteLine ();
 		}
