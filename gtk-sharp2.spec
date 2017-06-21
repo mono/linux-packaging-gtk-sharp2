@@ -44,7 +44,7 @@ BuildRequires:  update-desktop-files
 %endif
 BuildRequires:  vte-devel
 Version:	2.12.43
-Release:	0.xamarin.7
+Release:	0.xamarin.8
 Source:         %{_name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
