@@ -188,5 +188,7 @@ rm -rf %{buildroot}
 %dir %{_prefix}/lib/mono/gtk-sharp-2.0
 %dir %{_prefix}/lib/gtk-sharp-2.0
 
+%files -n gtk-sharp2-devel
+
 %changelog
 
