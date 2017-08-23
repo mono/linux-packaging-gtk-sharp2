@@ -44,7 +44,7 @@ BuildRequires:  update-desktop-files
 %endif
 BuildRequires:  vte-devel
 Version:	2.12.45
-Release:	0.xamarin.2
+Release:	0.xamarin.3
 Source:         %{_name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
