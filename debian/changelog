@@ -1,3 +1,9 @@
+gtk-sharp2 (2.12.45-0xamarin11) preview; urgency=medium
+
+  * Packaging bugfix:
+
+ -- Xamarin Public Jenkins (auto-signing) <releng@xamarin.com>  Wed, 26 Sep 2018 14:40:35 +0000
+
 gtk-sharp2 (2.12.45-0xamarin10) preview; urgency=medium
 
   * Packaging bugfix:
